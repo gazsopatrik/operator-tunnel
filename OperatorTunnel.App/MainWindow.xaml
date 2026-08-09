@@ -24,11 +24,10 @@
         <Storyboard x:Key="CursorAnimation"><DoubleAnimation Storyboard.TargetName="CursorGlyph" Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.55" AutoReverse="True" RepeatBehavior="Forever" /></Storyboard>
         <Storyboard x:Key="FlickerAnimation"><DoubleAnimation Storyboard.TargetName="FlickerText" Storyboard.TargetProperty="Opacity" From="1" To="0.35" Duration="0:0:0.12" AutoReverse="True" RepeatBehavior="Forever" /></Storyboard>
         <Storyboard x:Key="PulseAnimation"><DoubleAnimation Storyboard.TargetName="StatusDot" Storyboard.TargetProperty="Opacity" From="0.55" To="1" Duration="0:0:1.2" AutoReverse="True" RepeatBehavior="Forever" /></Storyboard>
-        <Storyboard x:Key="AmbientGlowAnimation"><DoubleAnimation Storyboard.TargetName="AmbientGlow" Storyboard.TargetProperty="Opacity" From="0.08" To="0.24" Duration="0:0:2.8" AutoReverse="True" RepeatBehavior="Forever" /></Storyboard>
         <Storyboard x:Key="AmbientLineAnimation"><DoubleAnimation Storyboard.TargetName="AmbientLine" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="-180" To="760" Duration="0:0:11" RepeatBehavior="Forever" /></Storyboard>
     </Window.Resources>
     <Window.Triggers>
-        <EventTrigger RoutedEvent="FrameworkElement.Loaded"><BeginStoryboard Storyboard="{StaticResource ScanlineAnimation}" /><BeginStoryboard Storyboard="{StaticResource CursorAnimation}" /><BeginStoryboard Storyboard="{StaticResource FlickerAnimation}" /><BeginStoryboard Storyboard="{StaticResource PulseAnimation}" /><BeginStoryboard Storyboard="{StaticResource AmbientGlowAnimation}" /><BeginStoryboard Storyboard="{StaticResource AmbientLineAnimation}" /></EventTrigger>
+        <EventTrigger RoutedEvent="FrameworkElement.Loaded"><BeginStoryboard Storyboard="{StaticResource ScanlineAnimation}" /><BeginStoryboard Storyboard="{StaticResource CursorAnimation}" /><BeginStoryboard Storyboard="{StaticResource FlickerAnimation}" /><BeginStoryboard Storyboard="{StaticResource PulseAnimation}" /><BeginStoryboard Storyboard="{StaticResource AmbientLineAnimation}" /></EventTrigger>
     </Window.Triggers>
     <Grid Margin="22" ClipToBounds="True" Background="#020604">
         <Grid.ColumnDefinitions><ColumnDefinition Width="218" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -57,7 +56,6 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"><TextBlock Text="DEMO BACKEND" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,0,20,0" /><Button Content="_" Click="MinimizeButton_Click" Width="34" Height="26" Background="Transparent" Foreground="{StaticResource Muted}" BorderThickness="0" FontSize="14" Cursor="Hand" /><Button Content="×" Click="CloseButton_Click" Width="34" Height="26" Background="Transparent" Foreground="{StaticResource Neon}" BorderThickness="0" FontSize="18" Cursor="Hand" /></StackPanel>
             </Grid>
         </Border>
-        <Border x:Name="AmbientGlow" Grid.Column="2" Width="420" Height="420" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,80,70" CornerRadius="210" Background="#6EFF3B" Opacity="0.12" IsHitTestVisible="False" />
         <Border x:Name="AmbientLine" Grid.Column="2" Height="1" VerticalAlignment="Top" Margin="0,54,0,0" Background="{StaticResource Neon}" Opacity="0.22" IsHitTestVisible="False" RenderTransformOrigin="0.5,0"><Border.RenderTransform><TranslateTransform /></Border.RenderTransform></Border>
         <Border x:Name="Scanline" Grid.Column="2" Height="2" VerticalAlignment="Top" Background="{StaticResource Neon}" Opacity="0.16" IsHitTestVisible="False" RenderTransformOrigin="0.5,0"><Border.RenderTransform><TranslateTransform /></Border.RenderTransform></Border>
     </Grid>
