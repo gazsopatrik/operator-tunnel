@@ -1,12 +1,46 @@
-﻿<Window x:Class="OperatorTunnel.App.MainWindow"
+<Window x:Class="OperatorTunnel.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:OperatorTunnel.App"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
+        Title="Operator Tunnel" Height="760" Width="1280" MinHeight="680" MinWidth="1050"
+        Background="#080B14" Foreground="#E8F0FF" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <SolidColorBrush x:Key="Panel" Color="#101625" />
+        <SolidColorBrush x:Key="PanelAlt" Color="#0D1220" />
+        <SolidColorBrush x:Key="Line" Color="#1D2B42" />
+        <SolidColorBrush x:Key="Muted" Color="#7E8CA8" />
+        <SolidColorBrush x:Key="Cyan" Color="#35E6FF" />
+        <SolidColorBrush x:Key="Green" Color="#55F2A4" />
+        <SolidColorBrush x:Key="Pink" Color="#FF4FD8" />
+        <Style x:Key="Nav" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" /><Setter Property="Foreground" Value="{StaticResource Muted}" />
+            <Setter Property="BorderThickness" Value="0" /><Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="16,12" /><Setter Property="FontSize" Value="13" /><Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}"><ContentPresenter /></Border></ControlTemplate></Setter.Value></Setter>
+            <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#17263A" /><Setter Property="Foreground" Value="{StaticResource Cyan}" /></Trigger></Style.Triggers>
+        </Style>
+        <Style x:Key="Metric" TargetType="TextBlock"><Setter Property="Foreground" Value="#E8F0FF" /><Setter Property="FontSize" Value="21" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    </Window.Resources>
+    <Grid Margin="22">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="218" /><ColumnDefinition Width="24" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="{StaticResource PanelAlt}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="16">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top">
+                    <StackPanel Orientation="Horizontal" Margin="4,6,0,34"><Border Width="30" Height="30" CornerRadius="9" Background="#123A4A" BorderBrush="{StaticResource Cyan}" BorderThickness="1"><TextBlock Text="⌁" Foreground="{StaticResource Cyan}" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border><StackPanel Margin="11,0,0,0" VerticalAlignment="Center"><TextBlock Text="OPERATOR" FontSize="14" FontWeight="Bold" /><TextBlock Text="TUNNEL / 0.1" FontSize="9" Foreground="{StaticResource Cyan}" /></StackPanel></StackPanel>
+                    <TextBlock Text="CONTROL PLANE" FontSize="10" Foreground="{StaticResource Muted}" Margin="5,0,0,10" />
+                    <Button Style="{StaticResource Nav}" Content="◈   Overview" Foreground="{StaticResource Cyan}" Background="#132639" /><Button Style="{StaticResource Nav}" Content="◇   Profiles" /><Button Style="{StaticResource Nav}" Content="⌁   Network policy" /><Button Style="{StaticResource Nav}" Content="▤   Event log" />
+                    <TextBlock Text="SYSTEM" FontSize="10" Foreground="{StaticResource Muted}" Margin="5,28,0,10" /><Button Style="{StaticResource Nav}" Content="⚙   Settings" /><Button Style="{StaticResource Nav}" Content="?   Security model" />
+                </StackPanel>
+                <Border DockPanel.Dock="Bottom" Background="#111D2A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="11" Margin="0,20,0,0"><StackPanel><TextBlock Text="BACKEND" FontSize="9" Foreground="{StaticResource Muted}" /><StackPanel Orientation="Horizontal" Margin="0,7,0,0"><Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" /><TextBlock Text=" WireGuard service" FontSize="11" Margin="7,0,0,0" /></StackPanel><TextBlock Text="Not connected" FontSize="10" Foreground="{StaticResource Muted}" Margin="14,4,0,0" /></StackPanel></Border>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="20" /><RowDefinition Height="Auto" /><RowDefinition Height="20" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+            <Grid Grid.Row="0"><StackPanel><TextBlock Text="NETWORK OPERATIONS" FontSize="11" Foreground="{StaticResource Pink}" FontWeight="SemiBold" /><TextBlock Text="Your tunnel, at a glance." FontSize="29" FontWeight="SemiBold" Margin="0,6,0,0" /></StackPanel><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom"><TextBlock Text="LOCAL MODE  •  DEMO STATE" Foreground="{StaticResource Muted}" FontSize="10" VerticalAlignment="Center" Margin="0,0,18,0" /><Button Content="＋  Import profile" Click="ImportProfile_Click" Padding="15,9" Background="#152333" Foreground="{StaticResource Cyan}" BorderBrush="#2A5064" BorderThickness="1" Cursor="Hand" /></StackPanel></Grid>
+            <Border Grid.Row="2" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="24"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center"><StackPanel Orientation="Horizontal"><Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#64748B" VerticalAlignment="Center" /><TextBlock x:Name="StatusLabel" Text="TUNNEL OFFLINE" Foreground="{StaticResource Muted}" FontSize="11" FontWeight="SemiBold" Margin="10,0,0,0" /></StackPanel><TextBlock Text="No active WireGuard tunnel" FontSize="24" FontWeight="SemiBold" Margin="0,12,0,4" /><TextBlock x:Name="ProfileLabel" Text="Select a profile to begin" Foreground="{StaticResource Muted}" FontSize="13" /></StackPanel><Button x:Name="ConnectButton" Grid.Column="1" Content="CONNECT" Click="ConnectButton_Click" Width="144" Height="52" Background="#173944" Foreground="{StaticResource Cyan}" BorderBrush="{StaticResource Cyan}" BorderThickness="1" FontWeight="Bold" Cursor="Hand" /></Grid></Border>
+            <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="1.25*" /><ColumnDefinition Width="20" /><ColumnDefinition Width="1*" /></Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0"><TextBlock Text="ACTIVE PROFILE" FontSize="11" Foreground="{StaticResource Muted}" Margin="2,0,0,10" /><Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="18"><StackPanel><Grid><TextBlock Text="No profile loaded" FontSize="17" FontWeight="SemiBold" /><TextBlock Text="PROFILE / —" HorizontalAlignment="Right" Foreground="{StaticResource Muted}" FontSize="10" /></Grid><Border Height="1" Background="{StaticResource Line}" Margin="0,16,0,16" /><Grid><Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions><StackPanel><TextBlock Text="INTERFACE" Foreground="{StaticResource Muted}" FontSize="10" /><TextBlock Text="—" Style="{StaticResource Metric}" /></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="ENDPOINT" Foreground="{StaticResource Muted}" FontSize="10" /><TextBlock Text="—" Style="{StaticResource Metric}" /></StackPanel></Grid><TextBlock Text="Allowed IPs" Foreground="{StaticResource Muted}" FontSize="10" Margin="0,20,0,7" /><TextBlock Text="No routing rules loaded" Foreground="#B5C0D5" FontSize="12" /></StackPanel></Border><TextBlock Text="TELEMETRY" FontSize="11" Foreground="{StaticResource Muted}" Margin="2,24,0,10" /><Grid><Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="20" /><ColumnDefinition /></Grid.ColumnDefinitions><Border Grid.Column="0" Background="{StaticResource Panel}" CornerRadius="12" Padding="16"><StackPanel><TextBlock Text="HANDSHAKE" Foreground="{StaticResource Muted}" FontSize="10" /><TextBlock Text="—" Style="{StaticResource Metric}" /><TextBlock Text="waiting for tunnel" Foreground="{StaticResource Muted}" FontSize="10" /></StackPanel></Border><Border Grid.Column="2" Background="{StaticResource Panel}" CornerRadius="12" Padding="16"><StackPanel><TextBlock Text="TRANSFER" Foreground="{StaticResource Muted}" FontSize="10" /><TextBlock Text="—" Style="{StaticResource Metric}" /><TextBlock Text="up / down" Foreground="{StaticResource Muted}" FontSize="10" /></StackPanel></Border></Grid></StackPanel>
+                <StackPanel Grid.Column="2"><TextBlock Text="SECURITY POSTURE" FontSize="11" Foreground="{StaticResource Muted}" Margin="2,0,0,10" /><Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="18"><StackPanel><TextBlock Text="Pre-flight checks" FontSize="17" FontWeight="SemiBold" /><StackPanel Orientation="Horizontal" Margin="0,20,0,13"><TextBlock Text="○" Foreground="{StaticResource Muted}" FontSize="18" /><StackPanel Margin="10,0,0,0"><TextBlock Text="DNS policy" /><TextBlock Text="Not evaluated" Foreground="{StaticResource Muted}" FontSize="10" /></StackPanel></StackPanel><StackPanel Orientation="Horizontal" Margin="0,0,0,13"><TextBlock Text="○" Foreground="{StaticResource Muted}" FontSize="18" /><StackPanel Margin="10,0,0,0"><TextBlock Text="Kill switch" /><TextBlock Text="Policy not configured" Foreground="{StaticResource Muted}" FontSize="10" /></StackPanel></StackPanel><StackPanel Orientation="Horizontal"><TextBlock Text="○" Foreground="{StaticResource Muted}" FontSize="18" /><StackPanel Margin="10,0,0,0"><TextBlock Text="Config validation" /><TextBlock Text="Awaiting profile" Foreground="{StaticResource Muted}" FontSize="10" /></StackPanel></StackPanel></StackPanel></Border><Border Background="#101B2A" BorderBrush="#24435B" BorderThickness="1" CornerRadius="12" Padding="15" Margin="0,20,0,0"><StackPanel><TextBlock Text="SECURITY NOTE" Foreground="{StaticResource Cyan}" FontSize="10" FontWeight="Bold" /><TextBlock Text="Operator Tunnel does not implement cryptography. WireGuard remains the protocol and crypto boundary." TextWrapping="Wrap" Foreground="#AEBED3" FontSize="11" Margin="0,8,0,0" /></StackPanel></Border></StackPanel>
+            </Grid>
+        </Grid>
     </Grid>
 </Window>
