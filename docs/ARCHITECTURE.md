@@ -22,6 +22,8 @@
 - Owns the VPN protocol, key exchange, encryption, authentication, and packet transport.
 - Is treated as a security-critical external dependency.
 
+The Windows integration targets the official per-tunnel service model. The service name is constrained to `WireGuardTunnel$<validated-name>`, and process arguments are passed as an argument list rather than through a shell.
+
 ## Command flow
 
 ```text
