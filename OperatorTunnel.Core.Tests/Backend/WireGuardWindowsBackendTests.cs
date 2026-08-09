@@ -42,6 +42,39 @@ public sealed class WireGuardWindowsBackendTests
         Assert.Equal(["/installtunnelservice", "C:\\Test User\\demo.conf"], runner.LastCommand?.Arguments);
     }
 
+    [Fact]
+    public async Task QueryStatisticsAsync_ParsesBothWireGuardOutputs()
+    {
+        var runner = new QueueProcessRunner(
+        [
+            new(0, "peer-key\t1700000000", string.Empty),
+            new(0, "peer-key\t1024\t2048", string.Empty)
+        ]);
+        var backend = new WireGuardWindowsBackend(runner, "wg.exe");
+
+        var result = await backend.QueryStatisticsAsync("demo");
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Statistics);
+        Assert.Equal(1024UL, result.Statistics!.Peers[0].ReceiveBytes);
+        Assert.Equal(2048UL, result.Statistics.Peers[0].TransmitBytes);
+        Assert.Equal(["show", "demo", "latest-handshakes"], runner.Commands[0].Arguments);
+        Assert.Equal(["show", "demo", "transfer"], runner.Commands[1].Arguments);
+    }
+
+    [Fact]
+    public async Task QueryStatisticsAsync_DoesNotExposeProcessErrorOutput()
+    {
+        var runner = new QueueProcessRunner([new(7, string.Empty, "private detail")]);
+        var backend = new WireGuardWindowsBackend(runner);
+
+        var result = await backend.QueryStatisticsAsync("demo");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("WireGuard statistics command failed with exit code 7.", result.Error);
+        Assert.DoesNotContain("private detail", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class RecordingProcessRunner(ProcessExecutionResult result) : IProcessRunner
     {
         public ExternalProcessCommand? LastCommand { get; private set; }
@@ -52,5 +85,16 @@ public sealed class WireGuardWindowsBackendTests
             return Task.FromResult(result);
         }
     }
-}
 
+    private sealed class QueueProcessRunner(IReadOnlyList<ProcessExecutionResult> results) : IProcessRunner
+    {
+        private int _index;
+        public List<ExternalProcessCommand> Commands { get; } = [];
+
+        public Task<ProcessExecutionResult> RunAsync(ExternalProcessCommand command, CancellationToken cancellationToken = default)
+        {
+            Commands.Add(command);
+            return Task.FromResult(results[_index++]);
+        }
+    }
+}
