@@ -60,7 +60,9 @@ public partial class MainWindow : Window
 
             var profile = parseResult.Profile!;
             _activeProfile = profile;
-            ProfileLabel.Text = $"Validated: {fileName} // {profile.Peers.Count} peer(s) // ready for backend";
+            var endpoint = profile.Peers.FirstOrDefault()?.Endpoint;
+            var allowedIps = profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase);
+            ProfileLabel.Text = $"VALIDATED // {fileName} // {profile.InterfaceAddress} // {endpoint ?? "no endpoint"} // {string.Join(", ", allowedIps)}";
         }
         catch (System.IO.IOException)
         {
