@@ -1,7 +1,10 @@
 using Microsoft.Win32;
 using OperatorTunnel.Core.Backend;
 using OperatorTunnel.Core.Profiles;
+using OperatorTunnel.Core.Security;
 using OperatorTunnel.Core.Tunnel;
+using System.Security.Cryptography;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
@@ -13,6 +16,7 @@ public partial class MainWindow : Window
     private WireGuardProfile? _activeProfile;
     private readonly TunnelStateMachine _tunnelState = new();
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
+    private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
 
     public MainWindow() => InitializeComponent();
 
@@ -61,7 +65,7 @@ public partial class MainWindow : Window
         ProfileLabel.Text = connected ? "Demo state only — WireGuard service is not connected" : "Select a profile to begin";
     }
 
-    private void ImportProfile_Click(object sender, RoutedEventArgs e)
+    private async void ImportProfile_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog { Filter = "WireGuard configuration (*.conf)|*.conf|All files (*.*)|*.*", Title = "Import WireGuard profile" };
         if (dialog.ShowDialog() != true)
@@ -71,7 +75,8 @@ public partial class MainWindow : Window
         {
             var fileName = System.IO.Path.GetFileName(dialog.FileName);
             var configText = System.IO.File.ReadAllText(dialog.FileName);
-            var parseResult = new WireGuardConfigParser().Parse(configText, System.IO.Path.GetFileNameWithoutExtension(fileName));
+            var profileName = ToSafeProfileName(System.IO.Path.GetFileNameWithoutExtension(fileName));
+            var parseResult = new WireGuardConfigParser().Parse(configText, profileName);
 
             if (!parseResult.IsValid)
             {
@@ -93,6 +98,33 @@ public partial class MainWindow : Window
             }
 
             var profile = parseResult.Profile!;
+
+            try
+            {
+                await _profileStore.SaveAsync(profile);
+            }
+            catch (IOException)
+            {
+                _activeProfile = null;
+                ProfileLabel.Text = "Import blocked: encrypted profile save failed";
+                MessageBox.Show("The profile was not activated because encrypted storage failed.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _activeProfile = null;
+                ProfileLabel.Text = "Import blocked: profile storage is not accessible";
+                MessageBox.Show("The profile was not activated because secure storage is not accessible.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            catch (CryptographicException)
+            {
+                _activeProfile = null;
+                ProfileLabel.Text = "Import blocked: DPAPI protection failed";
+                MessageBox.Show("The profile was not activated because Windows DPAPI protection failed.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             _activeProfile = profile;
             var endpoint = profile.Peers.FirstOrDefault()?.Endpoint;
             var allowedIps = profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase);
@@ -162,5 +194,12 @@ public partial class MainWindow : Window
             foreach (var descendant in FindVisualChildren<T>(child))
                 yield return descendant;
         }
+    }
+
+    private static string ToSafeProfileName(string name)
+    {
+        var normalized = new string(name.Select(character =>
+            char.IsLetterOrDigit(character) || character is '.' or '-' or '_' ? character : '_').ToArray());
+        return string.IsNullOrWhiteSpace(normalized) ? "imported-profile" : normalized[..Math.Min(normalized.Length, 64)];
     }
 }
