@@ -34,6 +34,10 @@ public partial class MainWindow : Window
     private string? _displayedInterfaceAddress;
     private string? _displayedEndpoint;
     private string? _displayedAllowedIps;
+    private string? _displayedHandshake;
+    private string? _displayedTransfer;
+    private string? _displayedHandshakeDetail;
+    private string? _displayedTransferDetail;
 
     public MainWindow()
     {
@@ -251,6 +255,15 @@ public partial class MainWindow : Window
         ConnectButton.BorderBrush = connected ? (Brush)FindResource("Neon") : (Brush)FindResource("Green");
         _eventLog.Add(EventSeverity.Info, connected ? "tunnel.disconnected" : "tunnel.connected", connected ? "Demo tunnel disconnected." : "Demo tunnel connected.");
         ProfileLabel.Text = connected ? "Demo state only — WireGuard service is not connected" : "Select a profile to begin";
+
+        if (connected)
+        {
+            ResetTelemetry();
+        }
+        else if (_backend is not DemoWireGuardBackend)
+        {
+            await RefreshTelemetryAsync(_activeProfile?.Name ?? "demo");
+        }
     }
 
     private async void ImportProfile_Click(object sender, RoutedEventArgs e)
@@ -398,6 +411,73 @@ public partial class MainWindow : Window
         _displayedInterfaceAddress = null;
         _displayedEndpoint = null;
         _displayedAllowedIps = null;
+    }
+
+    private async Task RefreshTelemetryAsync(string tunnelName)
+    {
+        var result = await _backend.QueryStatisticsAsync(tunnelName);
+        if (!result.Succeeded || result.Statistics is null)
+        {
+            SetTelemetry("ERR", result.Error ?? "statistics unavailable", "ERR", "statistics unavailable");
+            _eventLog.Add(EventSeverity.Warning, "tunnel.statistics_failed", "WireGuard statistics were unavailable.");
+            return;
+        }
+
+        var peers = result.Statistics.Peers;
+        var latestHandshake = peers
+            .Where(peer => peer.LatestHandshake.HasValue)
+            .Select(peer => peer.LatestHandshake!.Value)
+            .OrderByDescending(value => value)
+            .FirstOrDefault();
+        var receive = peers.Aggregate(0UL, (total, peer) => checked(total + peer.ReceiveBytes));
+        var transmit = peers.Aggregate(0UL, (total, peer) => checked(total + peer.TransmitBytes));
+
+        SetTelemetry(
+            latestHandshake == default ? "NONE" : latestHandshake.ToLocalTime().ToString("HH:mm:ss"),
+            $"{peers.Count} peer(s) // latest",
+            $"{FormatBytes(transmit)} / {FormatBytes(receive)}",
+            "tx / rx");
+    }
+
+    private void ResetTelemetry() => SetTelemetry("—", "waiting for tunnel", "—", "up / down");
+
+    private void SetTelemetry(string handshake, string handshakeDetail, string transfer, string transferDetail)
+    {
+        var metricBlocks = FindVisualChildren<TextBlock>(this)
+            .Where(block => block.Text is "—" or "â€”" || block.Text == _displayedHandshake || block.Text == _displayedTransfer)
+            .ToList();
+        if (metricBlocks.Count >= 2)
+        {
+            metricBlocks[^2].Text = handshake;
+            metricBlocks[^1].Text = transfer;
+        }
+
+        var waitingBlock = FindVisualChildren<TextBlock>(this).FirstOrDefault(block => block.Text == "waiting for tunnel" || block.Text == _displayedHandshakeDetail);
+        if (waitingBlock is not null)
+            waitingBlock.Text = handshakeDetail;
+
+        var transferBlock = FindVisualChildren<TextBlock>(this).FirstOrDefault(block => block.Text is "up / down" or "tx / rx" or "statistics unavailable" || block.Text == _displayedTransferDetail);
+        if (transferBlock is not null)
+            transferBlock.Text = transferDetail;
+
+        _displayedHandshake = handshake;
+        _displayedTransfer = transfer;
+        _displayedHandshakeDetail = handshakeDetail;
+        _displayedTransferDetail = transferDetail;
+    }
+
+    private static string FormatBytes(ulong bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)bytes;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+
+        return unit == 0 ? $"{bytes} B" : $"{value:0.##} {units[unit]}";
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
