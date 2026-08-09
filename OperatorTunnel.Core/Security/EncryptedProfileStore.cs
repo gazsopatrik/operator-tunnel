@@ -76,6 +76,21 @@ public sealed class EncryptedProfileStore
         }
     }
 
+    public Task<IReadOnlyList<string>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!Directory.Exists(_rootDirectory))
+            return Task.FromResult<IReadOnlyList<string>>([]);
+
+        var profiles = Directory.EnumerateFiles(_rootDirectory, "*.otp", SearchOption.TopDirectoryOnly)
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return Task.FromResult<IReadOnlyList<string>>(profiles!);
+    }
+
     private string GetSafePath(string fileName)
     {
         var fullRoot = Path.GetFullPath(_rootDirectory);
@@ -94,4 +109,3 @@ public sealed class EncryptedProfileStore
         return profileName;
     }
 }
-

@@ -18,7 +18,51 @@ public partial class MainWindow : Window
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
 
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        Loaded += MainWindow_Loaded;
+    }
+
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var savedProfiles = await _profileStore.ListAsync();
+            foreach (var savedProfile in savedProfiles)
+            {
+                try
+                {
+                    var restored = await _profileStore.LoadAsync(savedProfile);
+                    _activeProfile = restored;
+                    UpdateProfileCard(restored);
+                    ProfileLabel.Text = $"RESTORED // {restored.Name} // encrypted profile ready";
+                    return;
+                }
+                catch (InvalidDataException)
+                {
+                    // A corrupt profile must not prevent the app from opening.
+                    // It is skipped and never activated.
+                }
+                catch (CryptographicException)
+                {
+                    // A profile protected for another user is not activated.
+                }
+                catch (IOException)
+                {
+                    // A corrupt profile must not prevent the app from opening.
+                    // It is skipped and never activated.
+                }
+            }
+
+            if (savedProfiles.Count > 0)
+                ProfileLabel.Text = "Saved profiles found // none passed validation";
+        }
+        catch (IOException)
+        {
+            ProfileLabel.Text = "Profile store unavailable // import required";
+        }
+    }
 
     private async void ConnectButton_Click(object sender, RoutedEventArgs e)
     {

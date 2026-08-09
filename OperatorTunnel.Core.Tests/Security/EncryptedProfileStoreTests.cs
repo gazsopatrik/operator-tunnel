@@ -49,6 +49,26 @@ public sealed class EncryptedProfileStoreTests
         }
     }
 
+    [Fact]
+    public async Task ListAsync_ReturnsStoredProfileNamesOnly()
+    {
+        var root = CreateTestDirectory();
+        try
+        {
+            var store = new EncryptedProfileStore(new DpapiSecretProtector(), root);
+            await store.SaveAsync(CreateProfile());
+            await File.WriteAllTextAsync(Path.Combine(root, "ignored.txt"), "not a profile");
+
+            var profiles = await store.ListAsync();
+
+            Assert.Equal(["demo"], profiles);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static WireGuardProfile CreateProfile() => new(
         "demo",
         "10.77.0.2/32",
