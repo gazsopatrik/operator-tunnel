@@ -26,6 +26,8 @@ The Windows integration targets the official per-tunnel service model. The servi
 
 The process runner redirects output and supports cancellation. Raw process output is not exposed to the UI by the backend adapter because service output can contain machine-specific or sensitive diagnostics.
 
+Configuration serialization is an in-memory boundary only. The application must not write the serialized private key to a normal user file until encrypted storage and restrictive ACLs are implemented.
+
 ## Command flow
 
 ```text
