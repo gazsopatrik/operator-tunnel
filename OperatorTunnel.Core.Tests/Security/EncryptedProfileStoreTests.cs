@@ -69,6 +69,25 @@ public sealed class EncryptedProfileStoreTests
         }
     }
 
+    [Fact]
+    public async Task DeleteAsync_RemovesOnlyTheSelectedProfile()
+    {
+        var root = CreateTestDirectory();
+        try
+        {
+            var store = new EncryptedProfileStore(new DpapiSecretProtector(), root);
+            await store.SaveAsync(CreateProfile());
+
+            Assert.True(await store.DeleteAsync("demo"));
+            Assert.False(await store.DeleteAsync("demo"));
+            Assert.Empty(await store.ListAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static WireGuardProfile CreateProfile() => new(
         "demo",
         "10.77.0.2/32",

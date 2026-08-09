@@ -91,6 +91,17 @@ public sealed class EncryptedProfileStore
         return Task.FromResult<IReadOnlyList<string>>(profiles!);
     }
 
+    public Task<bool> DeleteAsync(string profileName, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var path = GetSafePath(SanitizeProfileName(profileName) + ".otp");
+        if (!File.Exists(path))
+            return Task.FromResult(false);
+
+        File.Delete(path);
+        return Task.FromResult(true);
+    }
+
     private string GetSafePath(string fileName)
     {
         var fullRoot = Path.GetFullPath(_rootDirectory);

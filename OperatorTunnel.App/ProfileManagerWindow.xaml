@@ -1,0 +1,16 @@
+<Window x:Class="OperatorTunnel.App.ProfileManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Profiles" Width="720" Height="480" MinWidth="600" MinHeight="380"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Foreground="#D8F8D7" FontFamily="Cascadia Mono, Consolas" WindowStartupLocation="CenterOwner">
+    <Border Background="#020604" BorderBrush="#2E7038" BorderThickness="1" CornerRadius="12" Padding="18">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="16" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid Grid.Row="0" MouseLeftButtonDown="Header_MouseLeftButtonDown"><StackPanel Orientation="Horizontal"><TextBlock Text="[ PROFILES ]" Foreground="#A8FF3E" FontWeight="Bold" FontSize="14" /><TextBlock Text="  //  ENCRYPTED LOCAL STORE" Foreground="#6E9276" FontSize="10" Margin="12,2,0,0" /></StackPanel><Button Content="×" Click="CloseButton_Click" HorizontalAlignment="Right" Width="34" Height="28" Background="Transparent" Foreground="#A8FF3E" BorderThickness="0" FontSize="18" Cursor="Hand" /></Grid>
+            <Border Grid.Row="2" Background="#07110B" BorderBrush="#173D22" BorderThickness="1" CornerRadius="8" Padding="10"><ListBox x:Name="ProfileItems" Background="Transparent" BorderThickness="0" Foreground="#D8F8D7" FontSize="13" /></Border>
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0"><Button Content="REFRESH" Click="RefreshButton_Click" Padding="14,8" Margin="0,0,8,0" Background="#0A2111" Foreground="#A8FF3E" BorderBrush="#2E7038" BorderThickness="1" Cursor="Hand" /><Button Content="LOAD SELECTED" Click="LoadButton_Click" Padding="14,8" Margin="0,0,8,0" Background="#0A2A16" Foreground="#45FF88" BorderBrush="#45FF88" BorderThickness="1" Cursor="Hand" /><Button Content="DELETE" Click="DeleteButton_Click" Padding="14,8" Background="#24110A" Foreground="#E5FF57" BorderBrush="#77532B" BorderThickness="1" Cursor="Hand" /></StackPanel>
+        </Grid>
+    </Border>
+</Window>
+

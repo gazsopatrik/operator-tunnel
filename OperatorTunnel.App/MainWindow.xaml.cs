@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private readonly SecurityEventLog _eventLog = new();
     private bool _allowExit;
     private bool _eventLogButtonHooked;
+    private bool _profilesButtonHooked;
 
     public MainWindow()
     {
@@ -37,6 +38,7 @@ public partial class MainWindow : Window
         _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
         Loaded += (_, _) => HookEventLogButton();
+        Loaded += (_, _) => HookProfilesButton();
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -126,6 +128,34 @@ public partial class MainWindow : Window
         _eventLog.Add(EventSeverity.Info, "event_log.opened", "Event log opened.");
         var window = new EventLogWindow(_eventLog.Snapshot()) { Owner = this };
         window.ShowDialog();
+    }
+
+    private void HookProfilesButton()
+    {
+        if (_profilesButtonHooked)
+            return;
+
+        var profilesButton = FindVisualChildren<WpfButton>(this)
+            .FirstOrDefault(button => string.Equals(button.Content?.ToString(), "[02]  PROFILES", StringComparison.Ordinal));
+        if (profilesButton is not null)
+        {
+            profilesButton.Click += ProfilesButton_Click;
+            _profilesButtonHooked = true;
+        }
+    }
+
+    private void ProfilesButton_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new ProfileManagerWindow(_profileStore, ActivateProfile) { Owner = this };
+        window.ShowDialog();
+    }
+
+    private void ActivateProfile(WireGuardProfile profile)
+    {
+        _activeProfile = profile;
+        UpdateProfileCard(profile);
+        ProfileLabel.Text = $"LOADED // {profile.Name} // encrypted profile ready";
+        _eventLog.Add(EventSeverity.Info, "profile.loaded", $"Profile {profile.Name} loaded from encrypted storage.");
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
