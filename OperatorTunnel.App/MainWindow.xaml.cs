@@ -5,6 +5,10 @@ using OperatorTunnel.Core.Security;
 using OperatorTunnel.Core.Tunnel;
 using System.Security.Cryptography;
 using System.IO;
+using Brush = System.Windows.Media.Brush;
+using Color = System.Windows.Media.Color;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
@@ -17,11 +21,15 @@ public partial class MainWindow : Window
     private readonly TunnelStateMachine _tunnelState = new();
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
+    private readonly TrayIconController _trayIcon;
+    private bool _allowExit;
 
     public MainWindow()
     {
         InitializeComponent();
         Loaded += MainWindow_Loaded;
+        Closing += MainWindow_Closing;
+        _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -62,6 +70,37 @@ public partial class MainWindow : Window
         {
             ProfileLabel.Text = "Profile store unavailable // import required";
         }
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_allowExit)
+        {
+            _trayIcon.Dispose();
+            return;
+        }
+
+        e.Cancel = true;
+        Hide();
+    }
+
+    private void ShowFromTray()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        });
+    }
+
+    private void ExitFromTray()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _allowExit = true;
+            Close();
+        });
     }
 
     private async void ConnectButton_Click(object sender, RoutedEventArgs e)
