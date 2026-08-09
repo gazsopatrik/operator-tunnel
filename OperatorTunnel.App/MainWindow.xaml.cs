@@ -15,8 +15,8 @@ public partial class MainWindow : Window
         StatusLabel.Foreground = connected ? (Brush)FindResource("Muted") : (Brush)FindResource("Green");
         StatusDot.Fill = connected ? new SolidColorBrush(Color.FromRgb(100, 116, 139)) : (Brush)FindResource("Green");
         ConnectButton.Content = connected ? "CONNECT" : "DISCONNECT";
-        ConnectButton.Foreground = connected ? (Brush)FindResource("Cyan") : (Brush)FindResource("Green");
-        ConnectButton.BorderBrush = connected ? (Brush)FindResource("Cyan") : (Brush)FindResource("Green");
+        ConnectButton.Foreground = connected ? (Brush)FindResource("Neon") : (Brush)FindResource("Green");
+        ConnectButton.BorderBrush = connected ? (Brush)FindResource("Neon") : (Brush)FindResource("Green");
         ProfileLabel.Text = connected ? "Demo state only — WireGuard service is not connected" : "Select a profile to begin";
     }
 
@@ -27,4 +27,3 @@ public partial class MainWindow : Window
             ProfileLabel.Text = $"Selected for validation: {System.IO.Path.GetFileName(dialog.FileName)}";
     }
 }
-
