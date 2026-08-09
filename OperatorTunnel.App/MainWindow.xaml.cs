@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using OperatorTunnel.Core.Profiles;
+using OperatorTunnel.Core.Tunnel;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
@@ -9,18 +10,34 @@ namespace OperatorTunnel.App;
 public partial class MainWindow : Window
 {
     private WireGuardProfile? _activeProfile;
+    private readonly TunnelStateMachine _tunnelState = new();
 
     public MainWindow() => InitializeComponent();
 
     private void ConnectButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_activeProfile is null)
+        var connected = StatusLabel.Text == "TUNNEL ONLINE";
+
+        var transition = connected
+            ? _tunnelState.BeginDisconnect()
+            : _tunnelState.BeginConnect(_activeProfile is not null);
+
+        if (!transition.Accepted)
         {
-            MessageBox.Show("Import and validate a WireGuard profile before connecting.", "Profile required", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(transition.Error, "Tunnel state blocked", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var connected = StatusLabel.Text == "TUNNEL ONLINE";
+        if (connected)
+        {
+            _tunnelState.CompleteDisconnect();
+        }
+        else
+        {
+            // Demo completion until the real WireGuard service adapter is connected.
+            _tunnelState.CompleteConnect();
+        }
+
         StatusLabel.Text = connected ? "TUNNEL OFFLINE" : "TUNNEL ONLINE";
         StatusLabel.Foreground = connected ? (Brush)FindResource("Muted") : (Brush)FindResource("Green");
         StatusDot.Fill = connected ? new SolidColorBrush(Color.FromRgb(100, 116, 139)) : (Brush)FindResource("Green");
