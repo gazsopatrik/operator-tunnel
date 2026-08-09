@@ -15,6 +15,7 @@ using WpfButton = System.Windows.Controls.Button;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace OperatorTunnel.App;
 
@@ -26,6 +27,8 @@ public partial class MainWindow : Window
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
     private readonly TrayIconController _trayIcon;
     private readonly SecurityEventLog _eventLog = new();
+    private readonly DispatcherTimer _telemetryTimer;
+    private bool _telemetryRefreshInFlight;
     private bool _allowExit;
     private bool _eventLogButtonHooked;
     private bool _profilesButtonHooked;
@@ -45,6 +48,8 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
         _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
+        _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _telemetryTimer.Tick += TelemetryTimer_Tick;
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
         Loaded += (_, _) => HookEventLogButton();
         Loaded += (_, _) => HookProfilesButton();
@@ -94,6 +99,7 @@ public partial class MainWindow : Window
     {
         if (_allowExit)
         {
+            _telemetryTimer.Stop();
             _trayIcon.Dispose();
             return;
         }
@@ -258,11 +264,13 @@ public partial class MainWindow : Window
 
         if (connected)
         {
+            _telemetryTimer.Stop();
             ResetTelemetry();
         }
         else if (_backend is not DemoWireGuardBackend)
         {
             await RefreshTelemetryAsync(_activeProfile?.Name ?? "demo");
+            _telemetryTimer.Start();
         }
     }
 
@@ -415,7 +423,18 @@ public partial class MainWindow : Window
 
     private async Task RefreshTelemetryAsync(string tunnelName)
     {
-        var result = await _backend.QueryStatisticsAsync(tunnelName);
+        BackendStatisticsResult result;
+        try
+        {
+            result = await _backend.QueryStatisticsAsync(tunnelName);
+        }
+        catch (Exception)
+        {
+            SetTelemetry("ERR", "statistics unavailable", "ERR", "statistics unavailable");
+            _eventLog.Add(EventSeverity.Warning, "tunnel.statistics_failed", "WireGuard statistics request failed safely.");
+            return;
+        }
+
         if (!result.Succeeded || result.Statistics is null)
         {
             SetTelemetry("ERR", result.Error ?? "statistics unavailable", "ERR", "statistics unavailable");
@@ -437,6 +456,22 @@ public partial class MainWindow : Window
             $"{peers.Count} peer(s) // latest",
             $"{FormatBytes(transmit)} / {FormatBytes(receive)}",
             "tx / rx");
+    }
+
+    private async void TelemetryTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_telemetryRefreshInFlight || _tunnelState.State != TunnelState.Connected || _backend is DemoWireGuardBackend)
+            return;
+
+        _telemetryRefreshInFlight = true;
+        try
+        {
+            await RefreshTelemetryAsync(_activeProfile?.Name ?? "demo");
+        }
+        finally
+        {
+            _telemetryRefreshInFlight = false;
+        }
     }
 
     private void ResetTelemetry() => SetTelemetry("—", "waiting for tunnel", "—", "up / down");
