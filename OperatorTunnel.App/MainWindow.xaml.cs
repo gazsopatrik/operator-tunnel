@@ -29,6 +29,11 @@ public partial class MainWindow : Window
     private bool _allowExit;
     private bool _eventLogButtonHooked;
     private bool _profilesButtonHooked;
+    private string? _displayedProfileName;
+    private string? _displayedProfileBadge;
+    private string? _displayedInterfaceAddress;
+    private string? _displayedEndpoint;
+    private string? _displayedAllowedIps;
 
     public MainWindow()
     {
@@ -335,13 +340,21 @@ public partial class MainWindow : Window
     private void UpdateProfileCard(WireGuardProfile profile)
     {
         var textBlocks = FindVisualChildren<TextBlock>(this).ToList();
+        var endpoint = profile.Peers.FirstOrDefault()?.Endpoint ?? "no endpoint";
+        var allowedIpsValue = string.Join(", ", profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase));
+        _displayedProfileName = profile.Name;
+        _displayedProfileBadge = $"PROFILE / {profile.Peers.Count:00}";
+        _displayedInterfaceAddress = profile.InterfaceAddress;
+        _displayedEndpoint = endpoint;
+        _displayedAllowedIps = allowedIpsValue;
+
         var profileName = textBlocks.FirstOrDefault(block => block.Text == "No profile loaded");
         if (profileName is not null)
             profileName.Text = profile.Name;
 
         var badge = textBlocks.FirstOrDefault(block => block.Text.StartsWith("PROFILE /", StringComparison.Ordinal));
         if (badge is not null)
-            badge.Text = $"PROFILE / {profile.Peers.Count:00}";
+            badge.Text = _displayedProfileBadge;
 
         var placeholders = textBlocks
             .Where(block => block.Text is "--" or "—" or "â€”")
@@ -350,23 +363,41 @@ public partial class MainWindow : Window
         if (placeholders.Count > 0)
             placeholders[0].Text = profile.InterfaceAddress;
         if (placeholders.Count > 1)
-            placeholders[1].Text = profile.Peers.FirstOrDefault()?.Endpoint ?? "no endpoint";
+            placeholders[1].Text = endpoint;
 
         var allowedIps = textBlocks.FirstOrDefault(block => block.Text == "No routing rules loaded");
         if (allowedIps is not null)
-            allowedIps.Text = string.Join(", ", profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase));
+            allowedIps.Text = allowedIpsValue;
     }
 
     private void ResetProfileCard()
     {
         var textBlocks = FindVisualChildren<TextBlock>(this).ToList();
-        var profileName = textBlocks.FirstOrDefault(block => block.Text != "No profile loaded" && block.Text.StartsWith("demo", StringComparison.OrdinalIgnoreCase));
+        var profileName = textBlocks.FirstOrDefault(block => block.Text == _displayedProfileName);
         if (profileName is not null)
             profileName.Text = "No profile loaded";
 
-        var badge = textBlocks.FirstOrDefault(block => block.Text.StartsWith("PROFILE /", StringComparison.Ordinal));
+        var badge = textBlocks.FirstOrDefault(block => block.Text == _displayedProfileBadge);
         if (badge is not null)
             badge.Text = "PROFILE / --";
+
+        var interfaceAddress = textBlocks.FirstOrDefault(block => block.Text == _displayedInterfaceAddress);
+        if (interfaceAddress is not null)
+            interfaceAddress.Text = "--";
+
+        var endpoint = textBlocks.FirstOrDefault(block => block.Text == _displayedEndpoint);
+        if (endpoint is not null)
+            endpoint.Text = "--";
+
+        var allowedIps = textBlocks.FirstOrDefault(block => block.Text == _displayedAllowedIps);
+        if (allowedIps is not null)
+            allowedIps.Text = "No routing rules loaded";
+
+        _displayedProfileName = null;
+        _displayedProfileBadge = null;
+        _displayedInterfaceAddress = null;
+        _displayedEndpoint = null;
+        _displayedAllowedIps = null;
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
