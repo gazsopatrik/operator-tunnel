@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using OperatorTunnel.Core.Backend;
 using OperatorTunnel.Core.Profiles;
 using OperatorTunnel.Core.Tunnel;
 using System.Windows.Controls;
@@ -11,10 +12,11 @@ public partial class MainWindow : Window
 {
     private WireGuardProfile? _activeProfile;
     private readonly TunnelStateMachine _tunnelState = new();
+    private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
 
     public MainWindow() => InitializeComponent();
 
-    private void ConnectButton_Click(object sender, RoutedEventArgs e)
+    private async void ConnectButton_Click(object sender, RoutedEventArgs e)
     {
         var connected = StatusLabel.Text == "TUNNEL ONLINE";
 
@@ -28,13 +30,25 @@ public partial class MainWindow : Window
             return;
         }
 
+        var backendResult = connected
+            ? await _backend.StopAsync(_activeProfile?.Name ?? "demo")
+            : await _backend.StartAsync(_activeProfile?.Name ?? "demo");
+
+        if (!backendResult.Succeeded)
+        {
+            _tunnelState.Fail(backendResult.Error ?? "Backend operation failed.");
+            StatusLabel.Text = "TUNNEL ERROR";
+            StatusLabel.Foreground = (Brush)FindResource("Warning");
+            MessageBox.Show(backendResult.Error, "Backend operation failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         if (connected)
         {
             _tunnelState.CompleteDisconnect();
         }
         else
         {
-            // Demo completion until the real WireGuard service adapter is connected.
             _tunnelState.CompleteConnect();
         }
 

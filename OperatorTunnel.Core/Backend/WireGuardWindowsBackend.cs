@@ -13,12 +13,39 @@ public sealed record BackendOperationResult(bool Succeeded, string? Error = null
     public static BackendOperationResult Failure(string error) => new(false, error);
 }
 
+public interface IWireGuardBackend
+{
+    Task<BackendOperationResult> InstallAsync(string tunnelName, string configPath, CancellationToken cancellationToken = default);
+    Task<BackendOperationResult> StartAsync(string tunnelName, CancellationToken cancellationToken = default);
+    Task<BackendOperationResult> StopAsync(string tunnelName, CancellationToken cancellationToken = default);
+    Task<BackendOperationResult> UninstallAsync(string tunnelName, CancellationToken cancellationToken = default);
+    Task<BackendOperationResult> QueryAsync(string tunnelName, CancellationToken cancellationToken = default);
+}
+
+public sealed class DemoWireGuardBackend : IWireGuardBackend
+{
+    public Task<BackendOperationResult> InstallAsync(string tunnelName, string configPath, CancellationToken cancellationToken = default) =>
+        Task.FromResult(BackendOperationResult.Success());
+
+    public Task<BackendOperationResult> StartAsync(string tunnelName, CancellationToken cancellationToken = default) =>
+        Task.FromResult(BackendOperationResult.Success());
+
+    public Task<BackendOperationResult> StopAsync(string tunnelName, CancellationToken cancellationToken = default) =>
+        Task.FromResult(BackendOperationResult.Success());
+
+    public Task<BackendOperationResult> UninstallAsync(string tunnelName, CancellationToken cancellationToken = default) =>
+        Task.FromResult(BackendOperationResult.Success());
+
+    public Task<BackendOperationResult> QueryAsync(string tunnelName, CancellationToken cancellationToken = default) =>
+        Task.FromResult(BackendOperationResult.Success());
+}
+
 /// <summary>
 /// Thin adapter around the official WireGuard Windows tunnel service commands.
 /// It deliberately receives an injected process runner so unit tests never touch
 /// Windows services or the local network.
 /// </summary>
-public sealed class WireGuardWindowsBackend
+public sealed class WireGuardWindowsBackend : IWireGuardBackend
 {
     private readonly IProcessRunner _processRunner;
     private readonly string _wireGuardExecutable;
@@ -53,4 +80,3 @@ public sealed class WireGuardWindowsBackend
             : BackendOperationResult.Failure($"WireGuard command failed with exit code {result.ExitCode}.");
     }
 }
-
