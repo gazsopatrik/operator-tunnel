@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using OperatorTunnel.Core.Profiles;
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
 
@@ -45,6 +46,7 @@ public partial class MainWindow : Window
             {
                 _activeProfile = null;
                 ProfileLabel.Text = $"Validation failed: {fileName}";
+                ResetProfileCard();
                 ShowValidationIssues(parseResult.Issues.Select(issue => $"line {issue.Line}: {issue.Message}"));
                 return;
             }
@@ -54,6 +56,7 @@ public partial class MainWindow : Window
             {
                 _activeProfile = null;
                 ProfileLabel.Text = $"Validation failed: {fileName}";
+                ResetProfileCard();
                 ShowValidationIssues(validation.Issues.Select(issue => issue.Message));
                 return;
             }
@@ -63,6 +66,7 @@ public partial class MainWindow : Window
             var endpoint = profile.Peers.FirstOrDefault()?.Endpoint;
             var allowedIps = profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase);
             ProfileLabel.Text = $"VALIDATED // {fileName} // {profile.InterfaceAddress} // {endpoint ?? "no endpoint"} // {string.Join(", ", allowedIps)}";
+            UpdateProfileCard(profile);
         }
         catch (System.IO.IOException)
         {
@@ -74,5 +78,58 @@ public partial class MainWindow : Window
     {
         var message = string.Join(Environment.NewLine, issues.Take(8));
         MessageBox.Show(message, "Profile validation failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+    }
+
+    private void UpdateProfileCard(WireGuardProfile profile)
+    {
+        var textBlocks = FindVisualChildren<TextBlock>(this).ToList();
+        var profileName = textBlocks.FirstOrDefault(block => block.Text == "No profile loaded");
+        if (profileName is not null)
+            profileName.Text = profile.Name;
+
+        var badge = textBlocks.FirstOrDefault(block => block.Text.StartsWith("PROFILE /", StringComparison.Ordinal));
+        if (badge is not null)
+            badge.Text = $"PROFILE / {profile.Peers.Count:00}";
+
+        var placeholders = textBlocks
+            .Where(block => block.Text is "--" or "—" or "â€”")
+            .Take(2)
+            .ToList();
+        if (placeholders.Count > 0)
+            placeholders[0].Text = profile.InterfaceAddress;
+        if (placeholders.Count > 1)
+            placeholders[1].Text = profile.Peers.FirstOrDefault()?.Endpoint ?? "no endpoint";
+
+        var allowedIps = textBlocks.FirstOrDefault(block => block.Text == "No routing rules loaded");
+        if (allowedIps is not null)
+            allowedIps.Text = string.Join(", ", profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private void ResetProfileCard()
+    {
+        var textBlocks = FindVisualChildren<TextBlock>(this).ToList();
+        var profileName = textBlocks.FirstOrDefault(block => block.Text != "No profile loaded" && block.Text.StartsWith("demo", StringComparison.OrdinalIgnoreCase));
+        if (profileName is not null)
+            profileName.Text = "No profile loaded";
+
+        var badge = textBlocks.FirstOrDefault(block => block.Text.StartsWith("PROFILE /", StringComparison.Ordinal));
+        if (badge is not null)
+            badge.Text = "PROFILE / --";
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
+    {
+        if (root is null)
+            yield break;
+
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is T match)
+                yield return match;
+
+            foreach (var descendant in FindVisualChildren<T>(child))
+                yield return descendant;
+        }
     }
 }
