@@ -29,6 +29,7 @@ public interface IWireGuardBackend
     Task<BackendOperationResult> StopAsync(string tunnelName, CancellationToken cancellationToken = default);
     Task<BackendOperationResult> UninstallAsync(string tunnelName, CancellationToken cancellationToken = default);
     Task<BackendOperationResult> QueryAsync(string tunnelName, CancellationToken cancellationToken = default);
+    Task<WireGuardServiceStatusResult> QueryStatusAsync(string tunnelName, CancellationToken cancellationToken = default);
     Task<BackendStatisticsResult> QueryStatisticsAsync(string tunnelName, CancellationToken cancellationToken = default);
 }
 
@@ -48,6 +49,9 @@ public sealed class DemoWireGuardBackend : IWireGuardBackend
 
     public Task<BackendOperationResult> QueryAsync(string tunnelName, CancellationToken cancellationToken = default) =>
         Task.FromResult(BackendOperationResult.Success());
+
+    public Task<WireGuardServiceStatusResult> QueryStatusAsync(string tunnelName, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new WireGuardServiceStatusResult(true, WireGuardServiceStatus.Unknown));
 
     public Task<BackendStatisticsResult> QueryStatisticsAsync(string tunnelName, CancellationToken cancellationToken = default) =>
         Task.FromResult(BackendStatisticsResult.Success(new WireGuardStatisticsParseResult([], [])));
@@ -85,6 +89,21 @@ public sealed class WireGuardWindowsBackend : IWireGuardBackend
 
     public Task<BackendOperationResult> QueryAsync(string tunnelName, CancellationToken cancellationToken = default) =>
         ExecuteAsync(WireGuardServiceCommands.QueryTunnel(tunnelName), cancellationToken);
+
+    public async Task<WireGuardServiceStatusResult> QueryStatusAsync(
+        string tunnelName,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _processRunner.RunAsync(
+            WireGuardServiceCommands.QueryTunnel(tunnelName),
+            cancellationToken);
+        if (result.ExitCode != 0)
+            return new(false, WireGuardServiceStatus.Unknown, $"WireGuard status command failed with exit code {result.ExitCode}.");
+
+        return WireGuardServiceStatusParser.TryParse(result.StandardOutput, out var status)
+            ? new(true, status)
+            : new(false, WireGuardServiceStatus.Unknown, "WireGuard returned an unrecognized service status.");
+    }
 
     public async Task<BackendStatisticsResult> QueryStatisticsAsync(
         string tunnelName,
