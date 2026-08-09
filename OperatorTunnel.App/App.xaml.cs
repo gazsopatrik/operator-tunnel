@@ -21,6 +21,11 @@ public partial class App : System.Windows.Application
 
         if (!createdNew)
         {
+            System.Windows.MessageBox.Show(
+                "Operator Tunnel is already running. Check the system tray.",
+                "Operator Tunnel",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
             Shutdown();
             return;
         }
