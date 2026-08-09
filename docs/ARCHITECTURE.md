@@ -30,6 +30,8 @@ Configuration serialization is an in-memory boundary only. The application must 
 
 The first secrets boundary uses Windows DPAPI scoped to the current user, with application-specific entropy. DPAPI failures are fatal to the storage operation; the app must not fall back to plaintext storage.
 
+The encrypted profile store uses a versioned file header, sanitized profile names, a root-directory containment check, and atomic replacement through a temporary file. Stored bytes contain the DPAPI ciphertext, not the serialized configuration.
+
 ## Command flow
 
 ```text
