@@ -16,6 +16,18 @@ public static class WireGuardServiceCommands
     public static ExternalProcessCommand QueryTunnel(string tunnelName) =>
         new("sc.exe", ["query", GetServiceName(tunnelName)]);
 
+    public static ExternalProcessCommand QueryLatestHandshakes(string wgExecutable, string tunnelName)
+    {
+        GetServiceName(tunnelName);
+        return new(wgExecutable, ["show", tunnelName, "latest-handshakes"]);
+    }
+
+    public static ExternalProcessCommand QueryTransfer(string wgExecutable, string tunnelName)
+    {
+        GetServiceName(tunnelName);
+        return new(wgExecutable, ["show", tunnelName, "transfer"]);
+    }
+
     public static ExternalProcessCommand UninstallTunnel(string wireGuardExecutable, string tunnelName) =>
         new(wireGuardExecutable, ["/uninstalltunnelservice", ValidateTunnelName(tunnelName)]);
 
@@ -34,4 +46,3 @@ public static class WireGuardServiceCommands
         return tunnelName;
     }
 }
-
