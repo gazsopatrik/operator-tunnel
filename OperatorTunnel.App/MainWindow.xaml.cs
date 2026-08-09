@@ -13,6 +13,12 @@ public partial class MainWindow : Window
 
     private void ConnectButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_activeProfile is null)
+        {
+            MessageBox.Show("Import and validate a WireGuard profile before connecting.", "Profile required", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         var connected = StatusLabel.Text == "TUNNEL ONLINE";
         StatusLabel.Text = connected ? "TUNNEL OFFLINE" : "TUNNEL ONLINE";
         StatusLabel.Foreground = connected ? (Brush)FindResource("Muted") : (Brush)FindResource("Green");
