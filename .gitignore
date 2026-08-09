@@ -1,0 +1,23 @@
+## .NET build output
+bin/
+obj/
+.vs/
+*.user
+*.suo
+.dotnet-cli-home/
+
+## Rider
+.idea/
+
+## Local secrets and test material
+*.key
+*.pem
+*.p12
+*.pfx
+*.conf
+secrets/
+test-data/private/
+
+## OS files
+Thumbs.db
+Desktop.ini
