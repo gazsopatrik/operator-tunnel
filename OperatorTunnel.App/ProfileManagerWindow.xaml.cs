@@ -12,12 +12,16 @@ public partial class ProfileManagerWindow : Window
 {
     private readonly EncryptedProfileStore _store;
     private readonly Action<WireGuardProfile> _profileLoaded;
+    private readonly Action<string> _profileDeleted;
+    private readonly Func<string, bool> _canDelete;
 
-    public ProfileManagerWindow(EncryptedProfileStore store, Action<WireGuardProfile> profileLoaded)
+    public ProfileManagerWindow(EncryptedProfileStore store, Action<WireGuardProfile> profileLoaded, Action<string> profileDeleted, Func<string, bool> canDelete)
     {
         InitializeComponent();
         _store = store;
         _profileLoaded = profileLoaded;
+        _profileDeleted = profileDeleted;
+        _canDelete = canDelete;
         Loaded += async (_, _) => await RefreshAsync();
     }
 
@@ -58,11 +62,15 @@ public partial class ProfileManagerWindow : Window
         if (ProfileItems.SelectedItem is not string profileName)
             return;
 
+        if (!_canDelete(profileName))
+            return;
+
         var confirmation = MessageBox.Show($"Delete encrypted profile '{profileName}'?", "Confirm profile deletion", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (confirmation != MessageBoxResult.Yes)
             return;
 
-        await _store.DeleteAsync(profileName);
+        if (await _store.DeleteAsync(profileName))
+            _profileDeleted(profileName);
         await RefreshAsync();
     }
 

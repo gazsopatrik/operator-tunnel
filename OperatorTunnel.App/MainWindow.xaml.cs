@@ -146,7 +146,7 @@ public partial class MainWindow : Window
 
     private void ProfilesButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new ProfileManagerWindow(_profileStore, ActivateProfile) { Owner = this };
+        var window = new ProfileManagerWindow(_profileStore, ActivateProfile, HandleProfileDeleted, CanDeleteProfile) { Owner = this };
         window.ShowDialog();
     }
 
@@ -156,6 +156,30 @@ public partial class MainWindow : Window
         UpdateProfileCard(profile);
         ProfileLabel.Text = $"LOADED // {profile.Name} // encrypted profile ready";
         _eventLog.Add(EventSeverity.Info, "profile.loaded", $"Profile {profile.Name} loaded from encrypted storage.");
+    }
+
+    private void HandleProfileDeleted(string profileName)
+    {
+        if (string.Equals(_activeProfile?.Name, profileName, StringComparison.OrdinalIgnoreCase))
+        {
+            _activeProfile = null;
+            ResetProfileCard();
+            ProfileLabel.Text = "PROFILE DELETED // import or load another profile";
+        }
+
+        _eventLog.Add(EventSeverity.Info, "profile.deleted", $"Profile {profileName} deleted from encrypted storage.");
+    }
+
+    private bool CanDeleteProfile(string profileName)
+    {
+        if (_tunnelState.State == TunnelState.Connected &&
+            string.Equals(_activeProfile?.Name, profileName, StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show("Disconnect the active tunnel before deleting its profile.", "Profile deletion blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
+        }
+
+        return true;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
