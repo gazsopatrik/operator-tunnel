@@ -244,6 +244,23 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_backend is not DemoWireGuardBackend)
+        {
+            var expectedStatus = connected
+                ? WireGuardServiceStatus.Stopped
+                : WireGuardServiceStatus.Running;
+            var statusCheck = await WaitForBackendStatusAsync(_activeProfile?.Name ?? "demo", expectedStatus);
+            if (!statusCheck.Succeeded)
+            {
+                _tunnelState.Fail(statusCheck.Error ?? "WireGuard service status verification failed.");
+                StatusLabel.Text = "TUNNEL ERROR";
+                StatusLabel.Foreground = (Brush)FindResource("Warning");
+                _eventLog.Add(EventSeverity.Error, "tunnel.status_verification_failed", "WireGuard service status could not be verified.");
+                MessageBox.Show(statusCheck.Error, "Tunnel status verification failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+        }
+
         if (connected)
         {
             _tunnelState.CompleteDisconnect();
@@ -456,6 +473,25 @@ public partial class MainWindow : Window
             $"{peers.Count} peer(s) // latest",
             $"{FormatBytes(transmit)} / {FormatBytes(receive)}",
             "tx / rx");
+    }
+
+    private async Task<(bool Succeeded, string? Error)> WaitForBackendStatusAsync(
+        string tunnelName,
+        WireGuardServiceStatus expectedStatus)
+    {
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            var status = await _backend.QueryStatusAsync(tunnelName);
+            if (status.Succeeded && status.Status == expectedStatus)
+                return (true, null);
+
+            if (!status.Succeeded && attempt == 9)
+                return (false, status.Error);
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250));
+        }
+
+        return (false, $"WireGuard service did not reach {expectedStatus} state in time.");
     }
 
     private async void TelemetryTimer_Tick(object? sender, EventArgs e)
