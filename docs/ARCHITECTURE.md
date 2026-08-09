@@ -24,6 +24,8 @@
 
 The Windows integration targets the official per-tunnel service model. The service name is constrained to `WireGuardTunnel$<validated-name>`, and process arguments are passed as an argument list rather than through a shell.
 
+The process runner redirects output and supports cancellation. Raw process output is not exposed to the UI by the backend adapter because service output can contain machine-specific or sensitive diagnostics.
+
 ## Command flow
 
 ```text
