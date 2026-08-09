@@ -11,6 +11,7 @@ using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using WpfButton = System.Windows.Controls.Button;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
@@ -26,6 +27,7 @@ public partial class MainWindow : Window
     private readonly TrayIconController _trayIcon;
     private readonly SecurityEventLog _eventLog = new();
     private bool _allowExit;
+    private bool _eventLogButtonHooked;
 
     public MainWindow()
     {
@@ -34,6 +36,7 @@ public partial class MainWindow : Window
         Closing += MainWindow_Closing;
         _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
+        Loaded += (_, _) => HookEventLogButton();
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -102,6 +105,27 @@ public partial class MainWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
             DragMove();
+    }
+
+    private void HookEventLogButton()
+    {
+        if (_eventLogButtonHooked)
+            return;
+
+        var eventLogButton = FindVisualChildren<WpfButton>(this)
+            .FirstOrDefault(button => string.Equals(button.Content?.ToString(), "[04]  EVENT LOG", StringComparison.Ordinal));
+        if (eventLogButton is not null)
+        {
+            eventLogButton.Click += EventLogButton_Click;
+            _eventLogButtonHooked = true;
+        }
+    }
+
+    private void EventLogButton_Click(object sender, RoutedEventArgs e)
+    {
+        _eventLog.Add(EventSeverity.Info, "event_log.opened", "Event log opened.");
+        var window = new EventLogWindow(_eventLog.Snapshot()) { Owner = this };
+        window.ShowDialog();
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
