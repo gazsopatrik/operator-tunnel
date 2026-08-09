@@ -28,6 +28,8 @@ The process runner redirects output and supports cancellation. Raw process outpu
 
 Configuration serialization is an in-memory boundary only. The application must not write the serialized private key to a normal user file until encrypted storage and restrictive ACLs are implemented.
 
+The first secrets boundary uses Windows DPAPI scoped to the current user, with application-specific entropy. DPAPI failures are fatal to the storage operation; the app must not fall back to plaintext storage.
+
 ## Command flow
 
 ```text
