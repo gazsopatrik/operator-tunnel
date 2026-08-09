@@ -24,6 +24,7 @@
 | Privilege escalation through UI | Narrow typed IPC, broker-side authorization and validation | IPC integration tests |
 | DNS leak during tunnel use | Explicit DNS policy, transition-state handling, leak test matrix | Windows integration tests |
 | Traffic leak during disconnect | Kill-switch state machine and fail-closed behavior | Firewall/routing integration tests |
+| Misconfigured DNS or kill switch | Typed network policy, fail-closed validation, explicit offline warnings | Policy unit tests and Windows integration tests |
 | Stale or misleading UI state | Backend is source of truth; event reconciliation and polling fallback | State-machine tests |
 | Malicious local profile path | Canonicalization, constrained file access, no arbitrary execution | Path validation tests |
 
