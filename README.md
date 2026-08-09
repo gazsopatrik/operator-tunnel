@@ -36,6 +36,22 @@ See:
 - Official WireGuard Windows tunnel service/backend
 - Unit and integration tests around parsing, policy, and service boundaries
 
+## Build and run locally
+
+After the initial dependency restore, build and test the app with:
+
+```powershell
+.\scripts\build.ps1
+```
+
+For a clean restore:
+
+```powershell
+.\scripts\build.ps1 -Restore
+```
+
+The script prints the generated executable path after a successful build. The current UI is a demo shell; it does not yet control a real WireGuard tunnel.
+
 ## License
 
 To be selected before the first public release.
