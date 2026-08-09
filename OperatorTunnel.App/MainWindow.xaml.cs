@@ -6,6 +6,7 @@ using OperatorTunnel.Core.Security;
 using OperatorTunnel.Core.Tunnel;
 using System.Security.Cryptography;
 using System.IO;
+using System.Windows.Input;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using MessageBox = System.Windows.MessageBox;
@@ -95,6 +96,22 @@ public partial class MainWindow : Window
             WindowState = WindowState.Normal;
             Activate();
         });
+    }
+
+    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+            DragMove();
+    }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void CloseButton_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
     }
 
     private void ExitFromTray()
