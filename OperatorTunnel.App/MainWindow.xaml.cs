@@ -1,5 +1,6 @@
 using Microsoft.Win32;
 using OperatorTunnel.Core.Backend;
+using OperatorTunnel.Core.Diagnostics;
 using OperatorTunnel.Core.Profiles;
 using OperatorTunnel.Core.Security;
 using OperatorTunnel.Core.Tunnel;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
     private readonly TrayIconController _trayIcon;
+    private readonly SecurityEventLog _eventLog = new();
     private bool _allowExit;
 
     public MainWindow()
@@ -30,6 +32,7 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
         _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
+        _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -126,6 +129,7 @@ public partial class MainWindow : Window
             _tunnelState.Fail(backendResult.Error ?? "Backend operation failed.");
             StatusLabel.Text = "TUNNEL ERROR";
             StatusLabel.Foreground = (Brush)FindResource("Warning");
+            _eventLog.Add(EventSeverity.Error, "tunnel.backend_failed", "Backend operation failed.");
             MessageBox.Show(backendResult.Error, "Backend operation failed", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
@@ -145,6 +149,7 @@ public partial class MainWindow : Window
         ConnectButton.Content = connected ? "CONNECT" : "DISCONNECT";
         ConnectButton.Foreground = connected ? (Brush)FindResource("Neon") : (Brush)FindResource("Green");
         ConnectButton.BorderBrush = connected ? (Brush)FindResource("Neon") : (Brush)FindResource("Green");
+        _eventLog.Add(EventSeverity.Info, connected ? "tunnel.disconnected" : "tunnel.connected", connected ? "Demo tunnel disconnected." : "Demo tunnel connected.");
         ProfileLabel.Text = connected ? "Demo state only — WireGuard service is not connected" : "Select a profile to begin";
     }
 
@@ -166,6 +171,7 @@ public partial class MainWindow : Window
                 _activeProfile = null;
                 ProfileLabel.Text = $"Validation failed: {fileName}";
                 ResetProfileCard();
+                _eventLog.Add(EventSeverity.Warning, "profile.validation_failed", $"Profile validation failed for {fileName}.");
                 ShowValidationIssues(parseResult.Issues.Select(issue => $"line {issue.Line}: {issue.Message}"));
                 return;
             }
@@ -176,6 +182,7 @@ public partial class MainWindow : Window
                 _activeProfile = null;
                 ProfileLabel.Text = $"Validation failed: {fileName}";
                 ResetProfileCard();
+                _eventLog.Add(EventSeverity.Warning, "profile.semantic_validation_failed", $"Profile semantic validation failed for {fileName}.");
                 ShowValidationIssues(validation.Issues.Select(issue => issue.Message));
                 return;
             }
@@ -190,6 +197,7 @@ public partial class MainWindow : Window
             {
                 _activeProfile = null;
                 ProfileLabel.Text = "Import blocked: encrypted profile save failed";
+                _eventLog.Add(EventSeverity.Error, "profile.secure_save_failed", "Encrypted profile save failed.");
                 MessageBox.Show("The profile was not activated because encrypted storage failed.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -197,6 +205,7 @@ public partial class MainWindow : Window
             {
                 _activeProfile = null;
                 ProfileLabel.Text = "Import blocked: profile storage is not accessible";
+                _eventLog.Add(EventSeverity.Error, "profile.storage_unavailable", "Encrypted profile storage was not accessible.");
                 MessageBox.Show("The profile was not activated because secure storage is not accessible.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -204,6 +213,7 @@ public partial class MainWindow : Window
             {
                 _activeProfile = null;
                 ProfileLabel.Text = "Import blocked: DPAPI protection failed";
+                _eventLog.Add(EventSeverity.Error, "profile.dpapi_failed", "Windows DPAPI protection failed.");
                 MessageBox.Show("The profile was not activated because Windows DPAPI protection failed.", "Secure save failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -213,6 +223,7 @@ public partial class MainWindow : Window
             var allowedIps = profile.Peers.SelectMany(peer => peer.AllowedIps).Distinct(StringComparer.OrdinalIgnoreCase);
             ProfileLabel.Text = $"VALIDATED // {fileName} // {profile.InterfaceAddress} // {endpoint ?? "no endpoint"} // {string.Join(", ", allowedIps)}";
             UpdateProfileCard(profile);
+            _eventLog.Add(EventSeverity.Info, "profile.imported", $"Profile {profile.Name} imported and saved securely.");
         }
         catch (System.IO.IOException)
         {
