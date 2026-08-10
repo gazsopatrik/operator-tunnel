@@ -95,6 +95,7 @@
                         <WrapPanel>
                             <Button Content="[ IMPORT NMAP XML ]" Click="ImportNmapButton_Click" FontSize="10" />
                             <Button Content="[ VIEW OBSERVATIONS ]" Click="ViewObservationsButton_Click" FontSize="10" />
+                            <Button Content="[ VIEW FINDINGS ]" Click="ViewFindingsButton_Click" FontSize="10" />
                         </WrapPanel>
                         <TextBlock x:Name="StatusText" Text="ready // select or create a project" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,22,0,0" />
                     </StackPanel>

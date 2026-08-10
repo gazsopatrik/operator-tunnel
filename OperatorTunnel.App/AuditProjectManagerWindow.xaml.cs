@@ -15,6 +15,7 @@ public partial class AuditProjectManagerWindow : Window
     private readonly IAuditSessionStore _sessionStore;
     private readonly IAuditObservationStore _observationStore;
     private readonly IAuditEvidenceStore _evidenceStore;
+    private readonly IAuditFindingStore _findingStore;
     private readonly Action<AuditProject>? _projectActivated;
     private readonly Action<AuditSession?>? _sessionChanged;
     private IReadOnlyList<AuditProject> _projects = [];
@@ -25,6 +26,7 @@ public partial class AuditProjectManagerWindow : Window
         IAuditSessionStore sessionStore,
         IAuditObservationStore observationStore,
         IAuditEvidenceStore evidenceStore,
+        IAuditFindingStore findingStore,
         Action<AuditProject>? projectActivated = null,
         Action<AuditSession?>? sessionChanged = null)
     {
@@ -32,6 +34,7 @@ public partial class AuditProjectManagerWindow : Window
         _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
         _observationStore = observationStore ?? throw new ArgumentNullException(nameof(observationStore));
         _evidenceStore = evidenceStore ?? throw new ArgumentNullException(nameof(evidenceStore));
+        _findingStore = findingStore ?? throw new ArgumentNullException(nameof(findingStore));
         _projectActivated = projectActivated;
         _sessionChanged = sessionChanged;
         InitializeComponent();
@@ -265,6 +268,26 @@ public partial class AuditProjectManagerWindow : Window
         }
 
         var window = new AuditObservationsWindow(_observationStore, session) { Owner = this };
+        window.ShowDialog();
+    }
+
+    private async void ViewFindingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before viewing findings";
+            return;
+        }
+
+        var session = (await _sessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _selectedProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            StatusText.Text = "no active session // start one before viewing findings";
+            return;
+        }
+
+        var window = new AuditFindingsWindow(_findingStore, session) { Owner = this };
         window.ShowDialog();
     }
 
