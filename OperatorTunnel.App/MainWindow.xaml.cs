@@ -1,4 +1,5 @@
 using Microsoft.Win32;
+using OperatorTunnel.Audit;
 using OperatorTunnel.Core.Backend;
 using OperatorTunnel.Core.Diagnostics;
 using OperatorTunnel.Core.Profiles;
@@ -25,6 +26,7 @@ public partial class MainWindow : Window
     private readonly TunnelStateMachine _tunnelState = new();
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
+    private readonly IAuditProjectStore _auditProjectStore;
     private readonly TrayIconController _trayIcon;
     private readonly SecurityEventLog _eventLog = new();
     private readonly DispatcherTimer _telemetryTimer;
@@ -32,6 +34,7 @@ public partial class MainWindow : Window
     private bool _allowExit;
     private bool _eventLogButtonHooked;
     private bool _profilesButtonHooked;
+    private bool _auditProjectsButtonHooked;
     private string? _displayedProfileName;
     private string? _displayedProfileBadge;
     private string? _displayedInterfaceAddress;
@@ -48,11 +51,17 @@ public partial class MainWindow : Window
         Loaded += MainWindow_Loaded;
         Closing += MainWindow_Closing;
         _trayIcon = new TrayIconController(ShowFromTray, ExitFromTray);
+        var auditStorePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "OperatorTunnel",
+            "audit-projects.json");
+        _auditProjectStore = new JsonAuditProjectStore(auditStorePath);
         _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _telemetryTimer.Tick += TelemetryTimer_Tick;
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
         Loaded += (_, _) => HookEventLogButton();
         Loaded += (_, _) => HookProfilesButton();
+        Loaded += (_, _) => HookAuditProjectsButton();
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -162,6 +171,26 @@ public partial class MainWindow : Window
     private void ProfilesButton_Click(object sender, RoutedEventArgs e)
     {
         var window = new ProfileManagerWindow(_profileStore, ActivateProfile, HandleProfileDeleted, CanDeleteProfile) { Owner = this };
+        window.ShowDialog();
+    }
+
+    private void HookAuditProjectsButton()
+    {
+        if (_auditProjectsButtonHooked)
+            return;
+
+        var auditProjectsButton = FindVisualChildren<WpfButton>(this)
+            .FirstOrDefault(button => string.Equals(button.Content?.ToString(), "[05]  AUDIT PROJECTS", StringComparison.Ordinal));
+        if (auditProjectsButton is not null)
+        {
+            auditProjectsButton.Click += AuditProjectsButton_Click;
+            _auditProjectsButtonHooked = true;
+        }
+    }
+
+    private void AuditProjectsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new AuditProjectManagerWindow(_auditProjectStore) { Owner = this };
         window.ShowDialog();
     }
 
