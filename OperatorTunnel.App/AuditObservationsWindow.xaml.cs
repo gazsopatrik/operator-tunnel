@@ -23,9 +23,10 @@ public partial class AuditObservationsWindow : Window
         try
         {
             var observations = await _store.ListBySessionAsync(_session.Id);
+            var inventory = AuditInventorySnapshot.FromObservations(observations);
             ObservationsList.ItemsSource = observations;
             SessionLabel.Text = $"// SESSION {_session.Id[..8].ToUpperInvariant()}";
-            StatusText.Text = $"{observations.Count} observation(s) // provenance preserved";
+            StatusText.Text = $"{observations.Count} observations // {inventory.HostCount} hosts // {inventory.PortCount} ports // {inventory.ServiceCount} services // provenance preserved";
         }
         catch (IOException)
         {
