@@ -271,6 +271,55 @@ public partial class AuditProjectManagerWindow : Window
         window.ShowDialog();
     }
 
+    private async void ImportNucleiButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before importing Nuclei output";
+            return;
+        }
+
+        var session = (await _sessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _selectedProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            StatusText.Text = "import blocked // start an active audit session first";
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Nuclei JSONL (*.jsonl;*.json)|*.jsonl;*.json|All files (*.*)|*.*",
+            Title = "Import Nuclei JSONL output"
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            var output = await File.ReadAllTextAsync(dialog.FileName);
+            var evidence = AuditEvidence.Create(session.Id, "nuclei", dialog.FileName, output);
+            var result = new NucleiJsonlParser().Parse(output, session.Id, evidence.Id, evidence.CapturedAt);
+            if (!result.IsValid && result.Observations.Count == 0)
+            {
+                StatusText.Text = $"import blocked // {result.Issues[0]}";
+                return;
+            }
+
+            await _evidenceStore.SaveAsync(evidence);
+            await _observationStore.AddAsync(result.Observations);
+            var hostCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Host);
+            var noteCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Note);
+            StatusText.Text = $"imported // {hostCount} host(s), {noteCount} Nuclei finding note(s) // evidence saved";
+            if (result.Issues.Count > 0)
+                StatusText.Text += $" // {result.Issues.Count} malformed line(s) skipped";
+        }
+        catch (IOException)
+        {
+            StatusText.Text = "import failed // Nuclei JSONL could not be read";
+        }
+    }
+
     private async void ViewFindingsButton_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedProject is null)

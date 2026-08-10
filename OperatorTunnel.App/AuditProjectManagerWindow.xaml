@@ -94,6 +94,7 @@
                         <TextBlock Text="// DATA PIPELINE" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,7,0,5" />
                         <WrapPanel>
                             <Button Content="[ IMPORT NMAP XML ]" Click="ImportNmapButton_Click" FontSize="10" />
+                            <Button Content="[ IMPORT NUCLEI JSONL ]" Click="ImportNucleiButton_Click" FontSize="10" />
                             <Button Content="[ VIEW OBSERVATIONS ]" Click="ViewObservationsButton_Click" FontSize="10" />
                             <Button Content="[ VIEW FINDINGS ]" Click="ViewFindingsButton_Click" FontSize="10" />
                         </WrapPanel>

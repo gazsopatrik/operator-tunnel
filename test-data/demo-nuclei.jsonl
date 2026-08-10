@@ -1,0 +1,2 @@
+{"host":"10.10.20.15","template-id":"exposed-admin-panel","matched-at":"http://10.10.20.15/admin","info":{"name":"Exposed admin panel","severity":"medium"}}
+{"host":"10.10.20.15","template-id":"tls-version","matched-at":"https://10.10.20.15","info":{"name":"Deprecated TLS version","severity":"low"}}
