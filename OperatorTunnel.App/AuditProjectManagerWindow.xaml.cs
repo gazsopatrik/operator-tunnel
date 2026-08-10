@@ -246,6 +246,26 @@ public partial class AuditProjectManagerWindow : Window
         }
     }
 
+    private async void ViewObservationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before viewing observations";
+            return;
+        }
+
+        var session = (await _sessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _selectedProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            StatusText.Text = "no active session // start one before viewing observations";
+            return;
+        }
+
+        var window = new AuditObservationsWindow(_observationStore, session) { Owner = this };
+        window.ShowDialog();
+    }
+
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
