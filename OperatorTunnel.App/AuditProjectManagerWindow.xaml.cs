@@ -1,7 +1,5 @@
 using OperatorTunnel.Audit;
 using Microsoft.Win32;
-using System.Security.Cryptography;
-using System.Text;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using System.IO;
 using System.Windows;
@@ -16,6 +14,7 @@ public partial class AuditProjectManagerWindow : Window
     private readonly IAuditProjectStore _store;
     private readonly IAuditSessionStore _sessionStore;
     private readonly IAuditObservationStore _observationStore;
+    private readonly IAuditEvidenceStore _evidenceStore;
     private readonly Action<AuditProject>? _projectActivated;
     private readonly Action<AuditSession?>? _sessionChanged;
     private IReadOnlyList<AuditProject> _projects = [];
@@ -25,12 +24,14 @@ public partial class AuditProjectManagerWindow : Window
         IAuditProjectStore store,
         IAuditSessionStore sessionStore,
         IAuditObservationStore observationStore,
+        IAuditEvidenceStore evidenceStore,
         Action<AuditProject>? projectActivated = null,
         Action<AuditSession?>? sessionChanged = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
         _observationStore = observationStore ?? throw new ArgumentNullException(nameof(observationStore));
+        _evidenceStore = evidenceStore ?? throw new ArgumentNullException(nameof(evidenceStore));
         _projectActivated = projectActivated;
         _sessionChanged = sessionChanged;
         InitializeComponent();
@@ -226,19 +227,20 @@ public partial class AuditProjectManagerWindow : Window
         try
         {
             var xml = await File.ReadAllTextAsync(dialog.FileName);
-            var evidenceId = $"nmap-{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(xml))).ToLowerInvariant()[..16]}";
-            var result = new NmapXmlParser().Parse(xml, session.Id, evidenceId);
+            var evidence = AuditEvidence.Create(session.Id, "nmap", dialog.FileName, xml);
+            var result = new NmapXmlParser().Parse(xml, session.Id, evidence.Id, evidence.CapturedAt);
             if (!result.IsValid)
             {
                 StatusText.Text = $"import blocked // {result.Issues[0]}";
                 return;
             }
 
+            await _evidenceStore.SaveAsync(evidence);
             await _observationStore.AddAsync(result.Observations);
             var hostCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Host);
             var portCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Port);
             var serviceCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Service);
-            StatusText.Text = $"imported // {hostCount} host(s), {portCount} port(s), {serviceCount} service(s) // evidence {evidenceId}";
+            StatusText.Text = $"imported // {hostCount} host(s), {portCount} port(s), {serviceCount} service(s) // evidence saved";
         }
         catch (IOException)
         {
