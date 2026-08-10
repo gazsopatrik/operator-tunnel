@@ -79,18 +79,23 @@
                         <TextBox x:Name="NameTextBox" />
                         <TextBlock Text="Assessment scope" Foreground="{StaticResource Muted}" />
                         <TextBox x:Name="ScopeTextBox" />
+                        <TextBlock Text="// PROJECT ACTIONS" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,4,0,5" />
                         <WrapPanel>
                             <Button Content="[ CREATE ]" Click="CreateButton_Click" />
                             <Button Content="[ SAVE ]" Click="SaveButton_Click" />
                             <Button Content="[ CLEAR ]" Click="ClearButton_Click" />
                             <Button Content="[ DELETE ]" Click="DeleteButton_Click" />
+                        </WrapPanel>
+                        <TextBlock Text="// SESSION CONTROL" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,7,0,5" />
+                        <WrapPanel>
                             <Button Content="[ START SESSION ]" Click="StartSessionButton_Click" />
                             <Button Content="[ END SESSION ]" Click="EndSessionButton_Click" />
                         </WrapPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="// DATA PIPELINE" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,7,0,5" />
+                        <WrapPanel>
                             <Button Content="[ IMPORT NMAP XML ]" Click="ImportNmapButton_Click" FontSize="10" />
                             <Button Content="[ VIEW OBSERVATIONS ]" Click="ViewObservationsButton_Click" FontSize="10" />
-                        </StackPanel>
+                        </WrapPanel>
                         <TextBlock x:Name="StatusText" Text="ready // select or create a project" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,22,0,0" />
                     </StackPanel>
                 </Border>
