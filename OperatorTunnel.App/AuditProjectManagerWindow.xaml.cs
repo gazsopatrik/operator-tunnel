@@ -16,6 +16,7 @@ public partial class AuditProjectManagerWindow : Window
     private readonly IAuditObservationStore _observationStore;
     private readonly IAuditEvidenceStore _evidenceStore;
     private readonly IAuditFindingStore _findingStore;
+    private readonly AuditParserRegistry _parserRegistry = AuditParserRegistry.CreateDefault();
     private readonly Action<AuditProject>? _projectActivated;
     private readonly Action<AuditSession?>? _sessionChanged;
     private IReadOnlyList<AuditProject> _projects = [];
@@ -231,13 +232,14 @@ public partial class AuditProjectManagerWindow : Window
         {
             var xml = await File.ReadAllTextAsync(dialog.FileName);
             var evidence = AuditEvidence.Create(session.Id, "nmap", dialog.FileName, xml);
-            var result = new NmapXmlParser().Parse(xml, session.Id, evidence.Id, evidence.CapturedAt);
-            if (!result.IsValid)
+            var parseResult = _parserRegistry.Parse("nmap-xml", xml, session.Id, evidence.Id, evidence.CapturedAt);
+            if (!parseResult.IsValid || parseResult.Parsed is null)
             {
-                StatusText.Text = $"import blocked // {result.Issues[0]}";
+                StatusText.Text = $"import blocked // {parseResult.Issues.FirstOrDefault() ?? "Nmap parser unavailable"}";
                 return;
             }
 
+            var result = parseResult.Parsed;
             await _evidenceStore.SaveAsync(evidence);
             await _observationStore.AddAsync(result.Observations);
             var hostCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Host);
@@ -299,10 +301,11 @@ public partial class AuditProjectManagerWindow : Window
         {
             var output = await File.ReadAllTextAsync(dialog.FileName);
             var evidence = AuditEvidence.Create(session.Id, "nuclei", dialog.FileName, output);
-            var result = new NucleiJsonlParser().Parse(output, session.Id, evidence.Id, evidence.CapturedAt);
-            if (!result.IsValid && result.Observations.Count == 0)
+            var parseResult = _parserRegistry.Parse("nuclei-jsonl", output, session.Id, evidence.Id, evidence.CapturedAt);
+            var result = parseResult.Parsed;
+            if (result is null || (!result.IsValid && result.Observations.Count == 0))
             {
-                StatusText.Text = $"import blocked // {result.Issues[0]}";
+                StatusText.Text = $"import blocked // {parseResult.Issues.FirstOrDefault() ?? "Nuclei parser unavailable"}";
                 return;
             }
 

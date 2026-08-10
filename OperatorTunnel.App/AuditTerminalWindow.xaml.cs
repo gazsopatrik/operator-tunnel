@@ -13,6 +13,7 @@ public partial class AuditTerminalWindow : Window
     private readonly IAuditEvidenceStore _evidenceStore;
     private readonly AuditSession _session;
     private readonly string _projectScope;
+    private readonly AuditParserRegistry _parserRegistry = AuditParserRegistry.CreateDefault();
     private CancellationTokenSource? _runCancellation;
 
     public AuditTerminalWindow(IAuditObservationStore observationStore, IAuditEvidenceStore evidenceStore, AuditSession session, string projectScope)
@@ -57,10 +58,11 @@ public partial class AuditTerminalWindow : Window
             }
 
             var evidence = AuditEvidence.Create(_session.Id, "nmap", "nmap-live.xml", result.Output);
-            var parsed = new NmapXmlParser().Parse(result.Output, _session.Id, evidence.Id, evidence.CapturedAt);
-            if (!parsed.IsValid)
+            var parseResult = _parserRegistry.Parse("nmap-xml", result.Output, _session.Id, evidence.Id, evidence.CapturedAt);
+            var parsed = parseResult.Parsed;
+            if (!parseResult.IsValid || parsed is null)
             {
-                StatusText.Text = $"scan output rejected // {parsed.Issues[0]}";
+                StatusText.Text = $"scan output rejected // {parseResult.Issues.FirstOrDefault() ?? "Nmap parser unavailable"}";
                 return;
             }
 
