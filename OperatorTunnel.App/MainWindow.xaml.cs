@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private readonly IWireGuardBackend _backend = new DemoWireGuardBackend();
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
     private readonly IAuditProjectStore _auditProjectStore;
+    private readonly IAuditSessionStore _auditSessionStore;
     private readonly TrayIconController _trayIcon;
     private readonly SecurityEventLog _eventLog = new();
     private readonly DispatcherTimer _telemetryTimer;
@@ -56,6 +57,10 @@ public partial class MainWindow : Window
             "OperatorTunnel",
             "audit-projects.json");
         _auditProjectStore = new JsonAuditProjectStore(auditStorePath);
+        _auditSessionStore = new JsonAuditSessionStore(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "OperatorTunnel",
+            "audit-sessions.json"));
         _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _telemetryTimer.Tick += TelemetryTimer_Tick;
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
@@ -190,7 +195,7 @@ public partial class MainWindow : Window
 
     private void AuditProjectsButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new AuditProjectManagerWindow(_auditProjectStore, ActivateAuditProject) { Owner = this };
+        var window = new AuditProjectManagerWindow(_auditProjectStore, _auditSessionStore, ActivateAuditProject, ActivateAuditSession) { Owner = this };
         window.ShowDialog();
     }
 
@@ -198,6 +203,17 @@ public partial class MainWindow : Window
     {
         FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()}";
         _eventLog.Add(EventSeverity.Info, "audit.project_activated", $"Audit project {project.Name} activated.");
+    }
+
+    private void ActivateAuditSession(AuditSession? session)
+    {
+        FlickerText.Text = session is null
+            ? "AUDIT // PROJECT READY"
+            : $"SESSION // {session.Id[..8].ToUpperInvariant()}";
+        _eventLog.Add(
+            EventSeverity.Info,
+            session is null ? "audit.session_ended" : "audit.session_started",
+            session is null ? "Audit session ended." : "Audit session started.");
     }
 
     private void ActivateProfile(WireGuardProfile profile)

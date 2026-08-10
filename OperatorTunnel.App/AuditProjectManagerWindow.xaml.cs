@@ -10,14 +10,22 @@ namespace OperatorTunnel.App;
 public partial class AuditProjectManagerWindow : Window
 {
     private readonly IAuditProjectStore _store;
+    private readonly IAuditSessionStore _sessionStore;
     private readonly Action<AuditProject>? _projectActivated;
+    private readonly Action<AuditSession?>? _sessionChanged;
     private IReadOnlyList<AuditProject> _projects = [];
     private AuditProject? _selectedProject;
 
-    public AuditProjectManagerWindow(IAuditProjectStore store, Action<AuditProject>? projectActivated = null)
+    public AuditProjectManagerWindow(
+        IAuditProjectStore store,
+        IAuditSessionStore sessionStore,
+        Action<AuditProject>? projectActivated = null,
+        Action<AuditSession?>? sessionChanged = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
+        _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
         _projectActivated = projectActivated;
+        _sessionChanged = sessionChanged;
         InitializeComponent();
         Loaded += AuditProjectManagerWindow_Loaded;
     }
@@ -140,6 +148,48 @@ public partial class AuditProjectManagerWindow : Window
         ScopeTextBox.Clear();
         await ReloadAsync();
         StatusText.Text = "deleted // project metadata removed";
+    }
+
+    private async void StartSessionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before starting a session";
+            return;
+        }
+
+        var sessions = await _sessionStore.ListAsync();
+        if (sessions.Any(session => session.ProjectId == _selectedProject.Id && session.Status == AuditSessionStatus.Active))
+        {
+            StatusText.Text = "session already active // end it before starting another";
+            return;
+        }
+
+        var session = AuditSession.Start(_selectedProject.Id);
+        await _sessionStore.SaveAsync(session);
+        _sessionChanged?.Invoke(session);
+        StatusText.Text = $"session active // {session.Id[..8].ToUpperInvariant()} // observations may now be attached";
+    }
+
+    private async void EndSessionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before ending a session";
+            return;
+        }
+
+        var session = (await _sessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _selectedProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            StatusText.Text = "no active session // start one before ending it";
+            return;
+        }
+
+        await _sessionStore.SaveAsync(session.Complete());
+        _sessionChanged?.Invoke(null);
+        StatusText.Text = $"session completed // {session.Id[..8].ToUpperInvariant()}";
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

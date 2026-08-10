@@ -29,4 +29,20 @@ public sealed record AuditSession(
             AuditSessionStatus.Active,
             vpnProfileName);
     }
+
+    public AuditSession Complete(DateTimeOffset? now = null)
+    {
+        if (Status != AuditSessionStatus.Active)
+            throw new InvalidOperationException("Only an active audit session can be completed.");
+
+        var endedAt = now ?? DateTimeOffset.UtcNow;
+        if (endedAt < StartedAt)
+            throw new ArgumentOutOfRangeException(nameof(now), "Session end cannot precede its start.");
+
+        return this with
+        {
+            EndedAt = endedAt,
+            Status = AuditSessionStatus.Completed
+        };
+    }
 }

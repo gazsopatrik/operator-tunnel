@@ -84,6 +84,8 @@
                             <Button Content="[ SAVE ]" Click="SaveButton_Click" />
                             <Button Content="[ CLEAR ]" Click="ClearButton_Click" />
                             <Button Content="[ DELETE ]" Click="DeleteButton_Click" />
+                            <Button Content="[ START SESSION ]" Click="StartSessionButton_Click" />
+                            <Button Content="[ END SESSION ]" Click="EndSessionButton_Click" />
                         </StackPanel>
                         <TextBlock x:Name="StatusText" Text="ready // select or create a project" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,22,0,0" />
                     </StackPanel>
