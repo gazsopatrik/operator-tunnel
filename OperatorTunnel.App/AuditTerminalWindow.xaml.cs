@@ -12,13 +12,16 @@ public partial class AuditTerminalWindow : Window
     private readonly IAuditObservationStore _observationStore;
     private readonly IAuditEvidenceStore _evidenceStore;
     private readonly AuditSession _session;
+    private readonly string _projectScope;
     private CancellationTokenSource? _runCancellation;
 
-    public AuditTerminalWindow(IAuditObservationStore observationStore, IAuditEvidenceStore evidenceStore, AuditSession session)
+    public AuditTerminalWindow(IAuditObservationStore observationStore, IAuditEvidenceStore evidenceStore, AuditSession session, string projectScope)
     {
         _observationStore = observationStore ?? throw new ArgumentNullException(nameof(observationStore));
         _evidenceStore = evidenceStore ?? throw new ArgumentNullException(nameof(evidenceStore));
         _session = session ?? throw new ArgumentNullException(nameof(session));
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectScope);
+        _projectScope = projectScope;
         InitializeComponent();
         SessionLabel.Text = $"// SESSION {_session.Id[..8].ToUpperInvariant()}";
     }
@@ -34,6 +37,13 @@ public partial class AuditTerminalWindow : Window
         var targets = TargetsTextBox.Text.Split([' ', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         try
         {
+            var scopeCheck = AuditScopePolicy.ValidateTargets(_projectScope, targets);
+            if (!scopeCheck.IsAllowed)
+            {
+                StatusText.Text = $"scope blocked // {scopeCheck.Issues[0]}";
+                return;
+            }
+
             var command = NmapCommandBuilder.Build(targets);
             _runCancellation = new CancellationTokenSource(TimeSpan.FromMinutes(2));
             StatusText.Text = "running // nmap structured XML scan";

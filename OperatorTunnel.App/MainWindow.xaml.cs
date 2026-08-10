@@ -273,7 +273,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var window = new AuditTerminalWindow(_auditObservationStore, _auditEvidenceStore, session) { Owner = this };
+        var window = new AuditTerminalWindow(_auditObservationStore, _auditEvidenceStore, session, _activeAuditProject.Scope) { Owner = this };
         window.ShowDialog();
     }
 
