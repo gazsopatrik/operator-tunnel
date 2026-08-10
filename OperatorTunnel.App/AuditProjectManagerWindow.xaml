@@ -80,8 +80,9 @@
                         <TextBlock Text="Assessment scope" Foreground="{StaticResource Muted}" />
                         <TextBox x:Name="ScopeTextBox" />
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="[+] NEW" Click="NewButton_Click" />
+                            <Button Content="[ CREATE ]" Click="CreateButton_Click" />
                             <Button Content="[ SAVE ]" Click="SaveButton_Click" />
+                            <Button Content="[ CLEAR ]" Click="ClearButton_Click" />
                             <Button Content="[ DELETE ]" Click="DeleteButton_Click" />
                         </StackPanel>
                         <TextBlock x:Name="StatusText" Text="ready // select or create a project" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,22,0,0" />

@@ -56,14 +56,39 @@ public partial class AuditProjectManagerWindow : Window
         StatusText.Text = $"selected // {project.Name} // {project.Scope}";
     }
 
-    private void NewButton_Click(object sender, RoutedEventArgs e)
+    private void CreateButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = CreateProjectAsync();
+    }
+
+    private async Task CreateProjectAsync()
+    {
+        try
+        {
+            var project = AuditProject.Create(NameTextBox.Text, ScopeTextBox.Text);
+            await _store.SaveAsync(project);
+            _selectedProject = project;
+            await ReloadAsync();
+            StatusText.Text = $"created // {project.Name} // project metadata persisted";
+        }
+        catch (ArgumentException ex)
+        {
+            StatusText.Text = $"validation failed // {ex.Message}";
+        }
+        catch (IOException)
+        {
+            StatusText.Text = "create failed // project metadata was not persisted";
+        }
+    }
+
+    private void ClearButton_Click(object sender, RoutedEventArgs e)
     {
         _selectedProject = null;
         ProjectsList.SelectedItem = null;
         NameTextBox.Clear();
         ScopeTextBox.Clear();
         NameTextBox.Focus();
-        StatusText.Text = "new project // enter name and assessment scope";
+        StatusText.Text = "form cleared // enter a name and scope, then select CREATE";
     }
 
     private async void SaveButton_Click(object sender, RoutedEventArgs e)
