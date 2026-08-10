@@ -1,55 +1,139 @@
 # Operator Security Workbench
 
-Operator Security Workbench is an open-source Windows security desktop application. It combines a professional audit workspace with the independently testable Operator Tunnel WireGuard control-plane module.
+> A security-focused Windows desktop workbench combining a WireGuard control plane with a modular, evidence-driven audit framework.
 
-> Early development — not production-ready. Do not use this project to protect sensitive traffic yet.
+Operator Security Workbench is an open-source C#/.NET project built around one core principle:
+
+**the application owns policy, workflow and visibility; proven security backends own the security primitives.**
+
+The VPN module does not implement a VPN protocol or cryptography. It is designed to work with the official WireGuard Windows tunnel service. The audit module is designed for authorized assessment workflows and normalizes tool output into traceable observations and evidence.
+
+> **Early development / MVP** — not production-ready. Do not use this project to protect sensitive traffic or assess systems without explicit authorization.
+
+## Why this project exists
+
+Operator Security Workbench is intentionally more than a UI demo. It is a portfolio project for secure Windows software engineering, combining:
+
+- desktop application architecture;
+- Windows service and privilege-boundary design;
+- VPN lifecycle and network-policy management;
+- structured security-tool output parsing;
+- evidence provenance and audit-session workflows;
+- threat modeling, tests and security documentation.
 
 ## Modules
 
-The application is intentionally modular while remaining a single Windows app:
+The project is modular in code, but delivered as one Windows application.
 
-- **Operator Tunnel** — WireGuard profile management, lifecycle, telemetry, DNS and kill-switch policy boundaries.
-- **Audit Core** — audit projects, sessions, normalized observations and provenance for future terminal/parser workflows.
+### Operator Tunnel
 
-The audit framework will remain focused on authorized assessment workflows. It is not an automated exploitation tool.
+The WireGuard control-plane module is responsible for:
 
-## Operator Tunnel scope
+- importing and managing WireGuard profiles;
+- strict configuration validation;
+- connect / disconnect lifecycle control;
+- tunnel status, handshake and transfer statistics;
+- DNS and kill-switch policy boundaries;
+- AllowedIPs visualization;
+- connection and error logging without secret leakage;
+- system-tray operation and single-instance behavior.
 
-The application will provide:
+WireGuard remains responsible for tunnel cryptography and packet protection. Operator Tunnel owns the user-facing workflow, policy checks, state presentation and Windows integration.
 
-- WireGuard profile import and management
-- Strict, safe configuration validation
-- Connect/disconnect and tunnel status
-- Handshake and transfer statistics
-- DNS policy and kill-switch controls
-- Allowed-IPs visualization
-- Connection and error logging without secret leakage
-- Windows system-tray operation
+### Audit Core
 
-The application does **not** implement a VPN protocol or cryptography. WireGuard remains responsible for tunnel cryptography and packet protection; Operator Tunnel owns the user-facing control plane, policy checks, state presentation, and Windows integration.
+The audit module is an evidence-first workspace for authorized assessments:
 
-## Security boundary
+- audit projects with explicit scope;
+- persistent audit sessions;
+- scope enforcement for scan targets;
+- normalized hosts, ports, services and notes;
+- raw evidence storage with provenance metadata;
+- parser registry for modular tool integrations;
+- secure Nmap XML parsing;
+- Nuclei JSONL import;
+- observations and findings workflow with verification states;
+- inventory summaries and audit history.
 
-The UI is treated as unprivileged code. Operations requiring elevation will cross a narrow, authenticated local service boundary. Private keys and sensitive configuration values must never be written to logs, telemetry, screenshots, or crash reports.
+The framework is designed to support assessment and verification. It is not an automated exploitation framework.
 
-See:
+## Current MVP capabilities
+
+The current build already includes:
+
+- cyberpunk / terminal-inspired WPF interface;
+- project creation, editing, deletion and persistence;
+- session start and end controls;
+- live Nmap terminal integration with structured XML output;
+- safe Nmap target validation and project-scope enforcement;
+- Nmap XML import from disk;
+- Nuclei JSONL import from disk;
+- normalized observation browsing;
+- evidence browsing and provenance display;
+- finding creation and explicit verification workflow;
+- automatic workspace restoration on application startup;
+- parser and security-boundary unit tests.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[WPF Windows UI] --> VPN[Operator Tunnel module]
+    UI --> AUDIT[Audit Core module]
+    VPN --> WG[Official WireGuard Windows backend]
+    AUDIT --> POLICY[Scope and validation policies]
+    AUDIT --> PARSERS[Parser registry]
+    PARSERS --> NMAP[Nmap XML]
+    PARSERS --> NUCLEI[Nuclei JSONL]
+    AUDIT --> EVIDENCE[Evidence and observations]
+```
+
+The intended privilege model keeps the desktop UI separate from privileged operations. Sensitive actions should cross a narrow, authenticated local service boundary rather than granting broad administrative access to the whole UI process.
+
+## Security principles
+
+- Do not invent cryptography when a reviewed backend already exists.
+- Treat imported tool output as untrusted input.
+- Fail closed when target scope cannot be validated.
+- Disable external XML resolution and reject dangerous XML features.
+- Preserve raw evidence separately from normalized observations.
+- Keep private keys and secrets out of logs, telemetry, screenshots and crash reports.
+- Require explicit human verification before an observation becomes a confirmed finding.
+- Make the privilege boundary visible and documented.
+
+Read the project security documentation:
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Threat model](docs/THREAT-MODEL.md)
 - [Development roadmap](docs/ROADMAP.md)
+- [Project brief](cybersecurity_audit_framework_project_brief.md)
 
-## Planned stack
+## Try the audit MVP
 
-- C#/.NET desktop client
-- WPF for the initial Windows shell and system-tray integration
-- Official WireGuard Windows tunnel service/backend
-- Unit and integration tests around parsing, policy, and service boundaries
+1. Build and start the application.
+2. Open **Audit Projects** and create a project with an authorized scope.
+3. Start an audit session.
+4. Import one of the included fixtures:
+   - [demo-nmap.xml](test-data/demo-nmap.xml)
+   - [demo-nuclei.jsonl](test-data/demo-nuclei.jsonl)
+5. Open **Observations**, **Evidence** or **Findings** to inspect the result.
 
-## Build and run locally
+The included fixtures are synthetic demo data and are safe to use for local testing.
 
-After the initial dependency restore, build and test the app with:
+## Build locally
+
+Requirements:
+
+- Windows 10/11;
+- .NET 8 SDK;
+- Visual Studio 2022 or another .NET-compatible editor;
+- Nmap is optional for the live terminal feature.
+
+From PowerShell:
 
 ```powershell
+git clone https://github.com/gazsopatrik/operator-tunnel.git
+cd operator-tunnel
 .\scripts\build.ps1
 ```
 
@@ -59,9 +143,38 @@ For a clean restore:
 .\scripts\build.ps1 -Restore
 ```
 
-The script prints the generated executable path after a successful build. The current UI is a demo shell; it does not yet control a real WireGuard tunnel.
+The build script compiles the solution, runs the test suite and prints the generated executable path. The current UI is an MVP shell; the real WireGuard service integration and production hardening remain active development work.
+
+## Testing
+
+The solution includes unit tests for:
+
+- WireGuard configuration parsing and validation;
+- tunnel lifecycle and service command generation;
+- statistics parsing;
+- encrypted profile storage and secret protection;
+- audit scope policy;
+- Nmap command construction and secure XML parsing;
+- Nuclei JSONL parsing;
+- evidence, observation, finding, project and session stores.
+
+Run the test project directly:
+
+```powershell
+dotnet test OperatorTunnel.Core.Tests/OperatorTunnel.Core.Tests.csproj
+```
+
+## Roadmap
+
+- official WireGuard Windows tunnel-service control;
+- production-grade privileged service boundary;
+- DNS leak and kill-switch integration tests;
+- richer parser adapters and tool-runner abstraction;
+- artifact hashing and stronger evidence integrity controls;
+- audit export and reporting;
+- polished information architecture and visual design;
+- packaging, signing and release automation.
 
 ## License
 
-To be selected before the first public release.
-
+The license will be selected before the first public release. Until then, treat this repository as source-available development code and do not redistribute it as a finished security product.
