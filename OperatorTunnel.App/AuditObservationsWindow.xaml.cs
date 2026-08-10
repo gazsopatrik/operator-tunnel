@@ -8,11 +8,13 @@ namespace OperatorTunnel.App;
 public partial class AuditObservationsWindow : Window
 {
     private readonly IAuditObservationStore _store;
+    private readonly IAuditEvidenceStore _evidenceStore;
     private readonly AuditSession _session;
 
-    public AuditObservationsWindow(IAuditObservationStore store, AuditSession session)
+    public AuditObservationsWindow(IAuditObservationStore store, IAuditEvidenceStore evidenceStore, AuditSession session)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
+        _evidenceStore = evidenceStore ?? throw new ArgumentNullException(nameof(evidenceStore));
         _session = session ?? throw new ArgumentNullException(nameof(session));
         InitializeComponent();
         Loaded += AuditObservationsWindow_Loaded;
@@ -41,4 +43,11 @@ public partial class AuditObservationsWindow : Window
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
+    private async void EvidenceButton_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new AuditEvidenceWindow(_evidenceStore, _session) { Owner = this };
+        window.ShowDialog();
+        await Task.CompletedTask;
+    }
 }

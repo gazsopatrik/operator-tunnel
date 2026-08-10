@@ -45,7 +45,10 @@
                     <TextBlock Text="[ OBSERVATIONS ]" Foreground="{StaticResource Neon}" FontWeight="Bold" FontSize="13" />
                     <TextBlock x:Name="SessionLabel" Foreground="{StaticResource Muted}" Margin="12,1,0,0" FontSize="10" />
                 </StackPanel>
-                <Button Content="×" HorizontalAlignment="Right" Width="34" Height="28" Padding="0" Click="CloseButton_Click" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="[ EVIDENCE ]" Width="110" Height="28" Padding="4,0" Click="EvidenceButton_Click" />
+                    <Button Content="×" Width="34" Height="28" Padding="0" Click="CloseButton_Click" />
+                </StackPanel>
             </Grid>
             <ListView x:Name="ObservationsList" Grid.Row="1" Margin="0,18,0,0">
                 <ListView.View>

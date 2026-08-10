@@ -267,7 +267,7 @@ public partial class AuditProjectManagerWindow : Window
             return;
         }
 
-        var window = new AuditObservationsWindow(_observationStore, session) { Owner = this };
+        var window = new AuditObservationsWindow(_observationStore, _evidenceStore, session) { Owner = this };
         window.ShowDialog();
     }
 
