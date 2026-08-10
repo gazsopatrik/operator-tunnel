@@ -1,4 +1,8 @@
 using OperatorTunnel.Audit;
+using Microsoft.Win32;
+using System.Security.Cryptography;
+using System.Text;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -11,6 +15,7 @@ public partial class AuditProjectManagerWindow : Window
 {
     private readonly IAuditProjectStore _store;
     private readonly IAuditSessionStore _sessionStore;
+    private readonly IAuditObservationStore _observationStore;
     private readonly Action<AuditProject>? _projectActivated;
     private readonly Action<AuditSession?>? _sessionChanged;
     private IReadOnlyList<AuditProject> _projects = [];
@@ -19,11 +24,13 @@ public partial class AuditProjectManagerWindow : Window
     public AuditProjectManagerWindow(
         IAuditProjectStore store,
         IAuditSessionStore sessionStore,
+        IAuditObservationStore observationStore,
         Action<AuditProject>? projectActivated = null,
         Action<AuditSession?>? sessionChanged = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _sessionStore = sessionStore ?? throw new ArgumentNullException(nameof(sessionStore));
+        _observationStore = observationStore ?? throw new ArgumentNullException(nameof(observationStore));
         _projectActivated = projectActivated;
         _sessionChanged = sessionChanged;
         InitializeComponent();
@@ -190,6 +197,53 @@ public partial class AuditProjectManagerWindow : Window
         await _sessionStore.SaveAsync(session.Complete());
         _sessionChanged?.Invoke(null);
         StatusText.Text = $"session completed // {session.Id[..8].ToUpperInvariant()}";
+    }
+
+    private async void ImportNmapButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProject is null)
+        {
+            StatusText.Text = "select a project before importing Nmap output";
+            return;
+        }
+
+        var session = (await _sessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _selectedProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            StatusText.Text = "import blocked // start an active audit session first";
+            return;
+        }
+
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Nmap XML (*.xml)|*.xml|All files (*.*)|*.*",
+            Title = "Import Nmap XML output"
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+
+        try
+        {
+            var xml = await File.ReadAllTextAsync(dialog.FileName);
+            var evidenceId = $"nmap-{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(xml))).ToLowerInvariant()[..16]}";
+            var result = new NmapXmlParser().Parse(xml, session.Id, evidenceId);
+            if (!result.IsValid)
+            {
+                StatusText.Text = $"import blocked // {result.Issues[0]}";
+                return;
+            }
+
+            await _observationStore.AddAsync(result.Observations);
+            var hostCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Host);
+            var portCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Port);
+            var serviceCount = result.Observations.Count(item => item.Kind == AuditObservationKind.Service);
+            StatusText.Text = $"imported // {hostCount} host(s), {portCount} port(s), {serviceCount} service(s) // evidence {evidenceId}";
+        }
+        catch (IOException)
+        {
+            StatusText.Text = "import failed // Nmap XML could not be read";
+        }
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

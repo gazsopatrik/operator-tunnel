@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private readonly EncryptedProfileStore _profileStore = new(new DpapiSecretProtector());
     private readonly IAuditProjectStore _auditProjectStore;
     private readonly IAuditSessionStore _auditSessionStore;
+    private readonly IAuditObservationStore _auditObservationStore;
     private readonly TrayIconController _trayIcon;
     private readonly SecurityEventLog _eventLog = new();
     private readonly DispatcherTimer _telemetryTimer;
@@ -61,6 +62,10 @@ public partial class MainWindow : Window
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "OperatorTunnel",
             "audit-sessions.json"));
+        _auditObservationStore = new JsonAuditObservationStore(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "OperatorTunnel",
+            "audit-observations.json"));
         _telemetryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _telemetryTimer.Tick += TelemetryTimer_Tick;
         _eventLog.Add(EventSeverity.Info, "app.started", "Operator Tunnel started in demo backend mode.");
@@ -195,7 +200,7 @@ public partial class MainWindow : Window
 
     private void AuditProjectsButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new AuditProjectManagerWindow(_auditProjectStore, _auditSessionStore, ActivateAuditProject, ActivateAuditSession) { Owner = this };
+        var window = new AuditProjectManagerWindow(_auditProjectStore, _auditSessionStore, _auditObservationStore, ActivateAuditProject, ActivateAuditSession) { Owner = this };
         window.ShowDialog();
     }
 

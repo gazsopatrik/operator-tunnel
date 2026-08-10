@@ -87,6 +87,9 @@
                             <Button Content="[ START SESSION ]" Click="StartSessionButton_Click" />
                             <Button Content="[ END SESSION ]" Click="EndSessionButton_Click" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="[ IMPORT NMAP XML ]" Click="ImportNmapButton_Click" FontSize="10" />
+                        </StackPanel>
                         <TextBlock x:Name="StatusText" Text="ready // select or create a project" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,22,0,0" />
                     </StackPanel>
                 </Border>
