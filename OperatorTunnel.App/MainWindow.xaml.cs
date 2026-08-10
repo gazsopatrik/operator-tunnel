@@ -39,6 +39,8 @@ public partial class MainWindow : Window
     private bool _eventLogButtonHooked;
     private bool _profilesButtonHooked;
     private bool _auditProjectsButtonHooked;
+    private bool _auditTerminalButtonHooked;
+    private AuditProject? _activeAuditProject;
     private string? _displayedProfileName;
     private string? _displayedProfileBadge;
     private string? _displayedInterfaceAddress;
@@ -82,6 +84,7 @@ public partial class MainWindow : Window
         Loaded += (_, _) => HookEventLogButton();
         Loaded += (_, _) => HookProfilesButton();
         Loaded += (_, _) => HookAuditProjectsButton();
+        Loaded += (_, _) => HookAuditTerminalButton();
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -240,8 +243,43 @@ public partial class MainWindow : Window
         window.ShowDialog();
     }
 
+    private void HookAuditTerminalButton()
+    {
+        if (_auditTerminalButtonHooked)
+            return;
+
+        var terminalButton = FindVisualChildren<WpfButton>(this)
+            .FirstOrDefault(button => string.Equals(button.Content?.ToString(), "[06]  AUDIT TERMINAL", StringComparison.Ordinal));
+        if (terminalButton is not null)
+        {
+            terminalButton.Click += AuditTerminalButton_Click;
+            _auditTerminalButtonHooked = true;
+        }
+    }
+
+    private async void AuditTerminalButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_activeAuditProject is null)
+        {
+            MessageBox.Show("Select an audit project before opening the terminal.", "Audit project required", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var session = (await _auditSessionStore.ListAsync())
+            .LastOrDefault(item => item.ProjectId == _activeAuditProject.Id && item.Status == AuditSessionStatus.Active);
+        if (session is null)
+        {
+            MessageBox.Show("Start an audit session before running Nmap.", "Audit session required", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var window = new AuditTerminalWindow(_auditObservationStore, _auditEvidenceStore, session) { Owner = this };
+        window.ShowDialog();
+    }
+
     private void ActivateAuditProject(AuditProject project)
     {
+        _activeAuditProject = project;
         FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()}";
         _eventLog.Add(EventSeverity.Info, "audit.project_activated", $"Audit project {project.Name} activated.");
         _ = RefreshAuditHeaderAsync(project);
