@@ -34,7 +34,12 @@ public partial class AuditFindingsWindow : Window
         {
             _findings = await _store.ListBySessionAsync(_session.Id);
             FindingsList.ItemsSource = _findings;
-            StatusText.Text = $"{_findings.Count} finding(s) // verification state enforced";
+            var potential = _findings.Count(item => item.Status == FindingStatus.PotentialExposure);
+            var verification = _findings.Count(item => item.Status == FindingStatus.VerificationRequired);
+            var verified = _findings.Count(item => item.Status == FindingStatus.Verified);
+            var notAffected = _findings.Count(item => item.Status == FindingStatus.NotAffected);
+            var falsePositive = _findings.Count(item => item.Status == FindingStatus.FalsePositive);
+            StatusText.Text = $"{_findings.Count} findings // potential {potential} // verify {verification} // verified {verified} // not affected {notAffected} // false positive {falsePositive}";
         }
         catch (IOException)
         {
