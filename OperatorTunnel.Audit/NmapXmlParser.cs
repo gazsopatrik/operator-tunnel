@@ -14,8 +14,10 @@ public sealed record NmapParseResult(
 /// Converts structured Nmap XML into normalized observations. DTDs and external
 /// entities are disabled because scan output is untrusted input.
 /// </summary>
-public sealed class NmapXmlParser
+public sealed class NmapXmlParser : IAuditOutputParser
 {
+    public string ToolName => "nmap-xml";
+
     public NmapParseResult Parse(
         string xml,
         string sessionId,
