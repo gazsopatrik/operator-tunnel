@@ -10,12 +10,14 @@ namespace OperatorTunnel.App;
 public partial class AuditProjectManagerWindow : Window
 {
     private readonly IAuditProjectStore _store;
+    private readonly Action<AuditProject>? _projectActivated;
     private IReadOnlyList<AuditProject> _projects = [];
     private AuditProject? _selectedProject;
 
-    public AuditProjectManagerWindow(IAuditProjectStore store)
+    public AuditProjectManagerWindow(IAuditProjectStore store, Action<AuditProject>? projectActivated = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
+        _projectActivated = projectActivated;
         InitializeComponent();
         Loaded += AuditProjectManagerWindow_Loaded;
     }
@@ -51,6 +53,7 @@ public partial class AuditProjectManagerWindow : Window
             return;
 
         _selectedProject = project;
+        _projectActivated?.Invoke(project);
         NameTextBox.Text = project.Name;
         ScopeTextBox.Text = project.Scope;
         StatusText.Text = $"selected // {project.Name} // {project.Scope}";
@@ -68,6 +71,7 @@ public partial class AuditProjectManagerWindow : Window
             var project = AuditProject.Create(NameTextBox.Text, ScopeTextBox.Text);
             await _store.SaveAsync(project);
             _selectedProject = project;
+            _projectActivated?.Invoke(project);
             await ReloadAsync();
             StatusText.Text = $"created // {project.Name} // project metadata persisted";
         }

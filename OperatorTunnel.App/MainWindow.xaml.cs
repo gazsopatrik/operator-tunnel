@@ -190,8 +190,14 @@ public partial class MainWindow : Window
 
     private void AuditProjectsButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new AuditProjectManagerWindow(_auditProjectStore) { Owner = this };
+        var window = new AuditProjectManagerWindow(_auditProjectStore, ActivateAuditProject) { Owner = this };
         window.ShowDialog();
+    }
+
+    private void ActivateAuditProject(AuditProject project)
+    {
+        FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()}";
+        _eventLog.Add(EventSeverity.Info, "audit.project_activated", $"Audit project {project.Name} activated.");
     }
 
     private void ActivateProfile(WireGuardProfile profile)
