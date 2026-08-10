@@ -32,7 +32,9 @@ public sealed class NmapXmlParser
         {
             var settings = new XmlReaderSettings
             {
-                DtdProcessing = DtdProcessing.Prohibit,
+                // Nmap emits a benign <!DOCTYPE nmaprun> declaration.
+                // Parsing is allowed, but external resolution remains disabled.
+                DtdProcessing = DtdProcessing.Parse,
                 XmlResolver = null,
                 MaxCharactersFromEntities = 0
             };

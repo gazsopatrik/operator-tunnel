@@ -42,7 +42,7 @@ public sealed class NmapXmlParserTests
     }
 
     [Fact]
-    public void RejectsDtdAndExternalEntityInput()
+    public void AcceptsNmapDoctypeButRejectsExternalEntityInput()
     {
         const string xml = """
             <!DOCTYPE nmaprun [<!ENTITY secret SYSTEM "file:///Windows/win.ini">]>
@@ -53,6 +53,32 @@ public sealed class NmapXmlParserTests
 
         Assert.False(result.IsValid);
         Assert.Empty(result.Observations);
+    }
+
+    [Fact]
+    public void AcceptsTheBenignDoctypeEmittedByNmap()
+    {
+        const string xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE nmaprun>
+            <?xml-stylesheet href="file:///Program Files/Nmap/nmap.xsl" type="text/xsl"?>
+            <nmaprun>
+              <host>
+                <address addr="8.8.8.8" addrtype="ipv4"/>
+                <ports>
+                  <port protocol="tcp" portid="443">
+                    <state state="open"/>
+                    <service name="https" product="https" />
+                  </port>
+                </ports>
+              </host>
+            </nmaprun>
+            """;
+
+        var result = new NmapXmlParser().Parse(xml, "session-1", "evidence-1");
+
+        Assert.True(result.IsValid);
+        Assert.Equal(3, result.Observations.Count);
     }
 
     [Fact]
