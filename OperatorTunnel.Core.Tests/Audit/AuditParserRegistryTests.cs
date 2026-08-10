@@ -29,6 +29,17 @@ public sealed class AuditParserRegistryTests
     }
 
     [Fact]
+    public void DefaultRegistryIncludesNucleiJsonl()
+    {
+        const string json = """{"host":"https://10.0.0.1","template-id":"ssl-expired","matched-at":"https://10.0.0.1","info":{"name":"SSL expired","severity":"high"}}""";
+
+        var result = AuditParserRegistry.CreateDefault().Parse("nuclei-jsonl", json, "session-1", "evidence-1");
+
+        Assert.True(result.IsValid);
+        Assert.Contains(result.Parsed!.Observations, item => item.Kind == AuditObservationKind.Note && item.Value.Contains("ssl-expired"));
+    }
+
+    [Fact]
     public void DuplicateToolNamesAreRejected()
     {
         var parser = new NmapXmlParser();

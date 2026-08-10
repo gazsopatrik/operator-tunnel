@@ -3,12 +3,12 @@ namespace OperatorTunnel.Audit;
 public interface IAuditOutputParser
 {
     string ToolName { get; }
-    NmapParseResult Parse(string output, string sessionId, string evidenceId, DateTimeOffset? observedAt = null);
+    AuditParseResult Parse(string output, string sessionId, string evidenceId, DateTimeOffset? observedAt = null);
 }
 
 public sealed record AuditParserResult(
     bool ParserFound,
-    NmapParseResult? Parsed,
+    AuditParseResult? Parsed,
     IReadOnlyList<string> Issues)
 {
     public bool IsValid => ParserFound && Parsed?.IsValid == true;
@@ -34,7 +34,7 @@ public sealed class AuditParserRegistry
         _parsers = parserList.ToDictionary(parser => parser.ToolName, StringComparer.OrdinalIgnoreCase);
     }
 
-    public static AuditParserRegistry CreateDefault() => new([new NmapXmlParser()]);
+    public static AuditParserRegistry CreateDefault() => new([new NmapXmlParser(), new NucleiJsonlParser()]);
 
     public AuditParserResult Parse(
         string toolName,

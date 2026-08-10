@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 namespace OperatorTunnel.Audit;
 
-public sealed record NmapParseResult(
+public sealed record AuditParseResult(
     IReadOnlyList<AuditObservation> Observations,
     IReadOnlyList<string> Issues)
 {
@@ -18,7 +18,7 @@ public sealed class NmapXmlParser : IAuditOutputParser
 {
     public string ToolName => "nmap-xml";
 
-    public NmapParseResult Parse(
+    public AuditParseResult Parse(
         string xml,
         string sessionId,
         string evidenceId,
