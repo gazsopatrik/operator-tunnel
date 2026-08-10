@@ -244,6 +244,7 @@ public partial class MainWindow : Window
     {
         FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()}";
         _eventLog.Add(EventSeverity.Info, "audit.project_activated", $"Audit project {project.Name} activated.");
+        _ = RefreshAuditHeaderAsync(project);
     }
 
     private void ActivateAuditSession(AuditSession? session)
@@ -255,6 +256,30 @@ public partial class MainWindow : Window
             EventSeverity.Info,
             session is null ? "audit.session_ended" : "audit.session_started",
             session is null ? "Audit session ended." : "Audit session started.");
+    }
+
+    private async Task RefreshAuditHeaderAsync(AuditProject project)
+    {
+        try
+        {
+            var session = (await _auditSessionStore.ListAsync())
+                .Where(item => item.ProjectId == project.Id && item.Status == AuditSessionStatus.Active)
+                .OrderByDescending(item => item.StartedAt)
+                .FirstOrDefault();
+            if (session is null)
+            {
+                FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()} // READY";
+                return;
+            }
+
+            var inventory = await new AuditInventoryBuilder(_auditObservationStore).BuildAsync(session.Id);
+            var findingCount = (await _auditFindingStore.ListBySessionAsync(session.Id)).Count;
+            FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()} // {inventory.HostCount}H {inventory.PortCount}P {inventory.ServiceCount}S // {findingCount}F";
+        }
+        catch (IOException)
+        {
+            FlickerText.Text = $"AUDIT // {project.Name.ToUpperInvariant()} // STORAGE DEGRADED";
+        }
     }
 
     private void ActivateProfile(WireGuardProfile profile)
