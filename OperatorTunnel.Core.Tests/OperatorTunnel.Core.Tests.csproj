@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OperatorTunnel.Core\OperatorTunnel.Core.csproj" />
+    <ProjectReference Include="..\OperatorTunnel.Audit\OperatorTunnel.Audit.csproj" />
   </ItemGroup>
 
 </Project>

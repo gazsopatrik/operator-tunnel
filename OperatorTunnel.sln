@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperatorTunnel.Core.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperatorTunnel.App", "OperatorTunnel.App\OperatorTunnel.App.csproj", "{1A93DA79-27CA-4037-AF4B-60B766F67A87}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperatorTunnel.Audit", "OperatorTunnel.Audit\OperatorTunnel.Audit.csproj", "{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{1A93DA79-27CA-4037-AF4B-60B766F67A87}.Release|x64.Build.0 = Release|Any CPU
 		{1A93DA79-27CA-4037-AF4B-60B766F67A87}.Release|x86.ActiveCfg = Release|Any CPU
 		{1A93DA79-27CA-4037-AF4B-60B766F67A87}.Release|x86.Build.0 = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|x64.Build.0 = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Debug|x86.Build.0 = Debug|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|x64.ActiveCfg = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|x64.Build.0 = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|x86.ActiveCfg = Release|Any CPU
+		{D1A5B6C7-8D9E-40F1-A2B3-C4D5E6F70819}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

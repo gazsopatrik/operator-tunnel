@@ -2,6 +2,30 @@
 
 ## Responsibilities
 
+## Modular application boundary
+
+The application is a single Windows desktop product composed of separately
+owned modules:
+
+```text
+Operator Security Workbench
+├── OperatorTunnel.Core       shared security and infrastructure primitives
+├── OperatorTunnel.Audit      audit projects, sessions, and normalized observations
+├── OperatorTunnel.App        WPF shell and module navigation
+└── Operator Tunnel backend   WireGuard-specific control-plane integration
+```
+
+`OperatorTunnel.Audit` deliberately does not reference the WireGuard backend.
+It stores an optional VPN profile name as session context, never VPN private
+keys or raw tunnel configuration. The VPN module remains independently
+testable and reusable, while the audit module can later accept observations
+from Nmap, other tools, manual input, or external hardware.
+
+The first shared audit entities are `AuditProject`, `AuditSession`, and
+`AuditObservation`. Every observation carries a session ID, source, timestamp,
+and raw evidence ID so later parsers cannot silently detach data from its
+provenance.
+
 ### Operator Tunnel UI
 
 - Displays profiles, state, health, statistics, and diagnostics.

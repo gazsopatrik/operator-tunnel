@@ -1,10 +1,19 @@
-# Operator Tunnel
+# Operator Security Workbench
 
-Operator Tunnel is an open-source Windows desktop client for managing WireGuard tunnels with a security-focused control plane and a cyberpunk-inspired user experience.
+Operator Security Workbench is an open-source Windows security desktop application. It combines a professional audit workspace with the independently testable Operator Tunnel WireGuard control-plane module.
 
 > Early development — not production-ready. Do not use this project to protect sensitive traffic yet.
 
-## Scope
+## Modules
+
+The application is intentionally modular while remaining a single Windows app:
+
+- **Operator Tunnel** — WireGuard profile management, lifecycle, telemetry, DNS and kill-switch policy boundaries.
+- **Audit Core** — audit projects, sessions, normalized observations and provenance for future terminal/parser workflows.
+
+The audit framework will remain focused on authorized assessment workflows. It is not an automated exploitation tool.
+
+## Operator Tunnel scope
 
 The application will provide:
 
