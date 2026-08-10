@@ -86,6 +86,8 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        await RestoreAuditWorkspaceAsync();
+
         try
         {
             var savedProfiles = await _profileStore.ListAsync();
@@ -121,6 +123,30 @@ public partial class MainWindow : Window
         catch (IOException)
         {
             ProfileLabel.Text = "Profile store unavailable // import required";
+        }
+    }
+
+    private async Task RestoreAuditWorkspaceAsync()
+    {
+        try
+        {
+            var project = (await _auditProjectStore.ListAsync())
+                .OrderByDescending(item => item.UpdatedAt)
+                .FirstOrDefault();
+            if (project is null)
+                return;
+
+            ActivateAuditProject(project);
+            var activeSession = (await _auditSessionStore.ListAsync())
+                .Where(item => item.ProjectId == project.Id && item.Status == AuditSessionStatus.Active)
+                .OrderByDescending(item => item.StartedAt)
+                .FirstOrDefault();
+            if (activeSession is not null)
+                ActivateAuditSession(activeSession);
+        }
+        catch (IOException)
+        {
+            _eventLog.Add(EventSeverity.Warning, "audit.workspace_restore_failed", "Audit workspace could not be restored.");
         }
     }
 
